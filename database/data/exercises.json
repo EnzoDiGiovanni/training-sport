@@ -1,0 +1,314 @@
+[
+ {
+  "slug": "db-bench",
+  "name": "Développé couché haltères",
+  "primary_muscle": "Pectoraux",
+  "secondary_muscles": "Triceps, avant des épaules",
+  "muscle_group": "chest",
+  "equipment": "2 haltères, banc plat",
+  "description": "Mouvement de base pour la poitrine. Les haltères offrent plus d’amplitude qu’une barre et corrigent les déséquilibres entre les deux côtés.",
+  "instructions": [
+   "Omoplates serrées et basses, pieds bien à plat au sol",
+   "Descendre les haltères au niveau du milieu de la poitrine, coudes à environ 45° du buste",
+   "Pousser vers le haut en rapprochant légèrement les haltères, sans les entrechoquer",
+   "Expirer pendant la poussée"
+  ],
+  "common_mistakes": [
+   "Coudes écartés à 90°, qui sollicitent trop les épaules",
+   "Fesses qui décollent du banc",
+   "Amplitude raccourcie en haut ou en bas"
+  ],
+  "measurement": "reps",
+  "load_type": "two_dumbbells",
+  "is_unilateral": false,
+  "illustration_key": "bench"
+ },
+ {
+  "slug": "row",
+  "name": "Rowing unilatéral sur banc",
+  "primary_muscle": "Dos (grand dorsal)",
+  "secondary_muscles": "Biceps, arrière des épaules",
+  "muscle_group": "back",
+  "equipment": "1 haltère, banc plat",
+  "description": "Tirage horizontal à un bras, appuyé sur le banc. Permet d’utiliser l’haltère combiné de 20 kg.",
+  "instructions": [
+   "Main et genou du même côté posés sur le banc, dos plat",
+   "Tirer l’haltère vers la hanche, pas vers l’épaule",
+   "Serrer l’omoplate en fin de mouvement, marquer 1 seconde",
+   "Redescendre en contrôlant jusqu’à bras tendu"
+  ],
+  "common_mistakes": [
+   "Dos arrondi ou buste qui pivote pour aider",
+   "Tirer avec le biceps au lieu du dos",
+   "Hausser l’épaule vers l’oreille"
+  ],
+  "measurement": "reps",
+  "load_type": "one_dumbbell",
+  "is_unilateral": true,
+  "illustration_key": "row"
+ },
+ {
+  "slug": "bulgarian",
+  "name": "Fentes bulgares",
+  "primary_muscle": "Quadriceps, fessiers",
+  "secondary_muscles": "Ischio-jambiers, équilibre",
+  "muscle_group": "legs",
+  "equipment": "Banc, poids du corps ou 2 haltères",
+  "description": "Fente avec le pied arrière surélevé sur le banc. Très efficace avec peu de charge, idéal avec des haltères de 10 kg.",
+  "instructions": [
+   "Pied avant assez loin du banc pour que le genou reste au-dessus de la cheville",
+   "Descendre à la verticale jusqu’à ce que le genou arrière frôle le sol",
+   "Pousser dans le talon avant pour remonter",
+   "Buste légèrement penché, gainage actif"
+  ],
+  "common_mistakes": [
+   "Pied avant trop proche du banc",
+   "Genou avant qui rentre vers l’intérieur",
+   "Rebondir en bas du mouvement"
+  ],
+  "measurement": "reps",
+  "load_type": "two_dumbbells",
+  "is_unilateral": true,
+  "illustration_key": "bulgarian"
+ },
+ {
+  "slug": "shoulder-press",
+  "name": "Développé épaules assis",
+  "primary_muscle": "Épaules (deltoïdes)",
+  "secondary_muscles": "Triceps",
+  "muscle_group": "shoulders",
+  "equipment": "2 haltères, banc",
+  "description": "Poussée verticale assise. Le banc stabilise le bas du dos.",
+  "instructions": [
+   "Haltères à hauteur des oreilles, paumes vers l’avant",
+   "Pousser vers le haut sans verrouiller brutalement les coudes",
+   "Abdos serrés, ne pas cambrer",
+   "Redescendre lentement en 2 secondes"
+  ],
+  "common_mistakes": [
+   "Cambrer le bas du dos pour pousser plus lourd",
+   "Descendre trop bas et perdre la tension",
+   "Coudes trop en arrière"
+  ],
+  "measurement": "reps",
+  "load_type": "two_dumbbells",
+  "is_unilateral": false,
+  "illustration_key": "shoulder-press"
+ },
+ {
+  "slug": "crunch",
+  "name": "Crunch",
+  "primary_muscle": "Abdominaux (grand droit)",
+  "secondary_muscles": null,
+  "muscle_group": "core",
+  "equipment": "Au sol, sans poids",
+  "description": "Enroulement du buste au sol, genoux fléchis.",
+  "instructions": [
+   "Bas du dos plaqué au sol",
+   "Enrouler le buste en rapprochant les côtes du bassin",
+   "Mains aux tempes, sans tirer sur la nuque",
+   "Expirer en montant"
+  ],
+  "common_mistakes": [
+   "Tirer sur la tête avec les mains",
+   "Monter jusqu’à s’asseoir (les fléchisseurs de hanche prennent le relais)",
+   "Aller trop vite"
+  ],
+  "measurement": "reps",
+  "load_type": "bodyweight",
+  "is_unilateral": false,
+  "illustration_key": "crunch"
+ },
+ {
+  "slug": "rdl",
+  "name": "Soulevé de terre roumain",
+  "primary_muscle": "Ischio-jambiers, fessiers",
+  "secondary_muscles": "Lombaires, avant-bras",
+  "muscle_group": "legs",
+  "equipment": "2 haltères",
+  "description": "Charnière de hanche jambes quasi tendues. Développe toute la chaîne arrière.",
+  "instructions": [
+   "Genoux légèrement fléchis, fixes pendant tout le mouvement",
+   "Pousser les fesses vers l’arrière, dos plat",
+   "Haltères au contact des cuisses puis des tibias",
+   "Descendre jusqu’à sentir l’étirement des ischios, remonter en serrant les fessiers"
+  ],
+  "common_mistakes": [
+   "Dos qui s’arrondit",
+   "Plier les genoux comme un squat",
+   "Haltères qui s’éloignent des jambes"
+  ],
+  "measurement": "reps",
+  "load_type": "two_dumbbells",
+  "is_unilateral": false,
+  "illustration_key": "rdl"
+ },
+ {
+  "slug": "incline",
+  "name": "Développé incliné haltères",
+  "primary_muscle": "Haut des pectoraux",
+  "secondary_muscles": "Épaules, triceps",
+  "muscle_group": "chest",
+  "equipment": "2 haltères, banc incliné à 30°",
+  "description": "Variante inclinée à environ 30° pour cibler la partie haute de la poitrine.",
+  "instructions": [
+   "Dossier à environ 30°, pas plus",
+   "Haltères descendus à hauteur du haut de la poitrine",
+   "Pousser à la verticale au-dessus des épaules",
+   "Omoplates serrées contre le dossier"
+  ],
+  "common_mistakes": [
+   "Inclinaison trop forte (le mouvement devient un développé épaules)",
+   "Rebond en bas",
+   "Poignets cassés vers l’arrière"
+  ],
+  "measurement": "reps",
+  "load_type": "two_dumbbells",
+  "is_unilateral": false,
+  "illustration_key": "incline"
+ },
+ {
+  "slug": "hip-thrust",
+  "name": "Hip thrust sur banc",
+  "primary_muscle": "Fessiers",
+  "secondary_muscles": "Ischio-jambiers",
+  "muscle_group": "legs",
+  "equipment": "1 haltère sur le bassin, banc",
+  "description": "Extension de hanche, haut du dos appuyé sur le banc. L’haltère combiné de 20 kg se tient sur le bassin.",
+  "instructions": [
+   "Bord du banc sous les omoplates",
+   "Pieds à plat, tibias verticaux en position haute",
+   "Monter jusqu’à aligner épaules, hanches et genoux",
+   "Serrer les fessiers 1 seconde en haut, menton rentré"
+  ],
+  "common_mistakes": [
+   "Cambrer le bas du dos en haut",
+   "Pieds trop loin (travail des ischios)",
+   "Pousser sur la pointe des pieds"
+  ],
+  "measurement": "reps",
+  "load_type": "one_dumbbell",
+  "is_unilateral": false,
+  "illustration_key": "hip-thrust"
+ },
+ {
+  "slug": "curl",
+  "name": "Curl biceps",
+  "primary_muscle": "Biceps",
+  "secondary_muscles": "Avant-bras",
+  "muscle_group": "arms",
+  "equipment": "2 haltères",
+  "description": "Flexion des coudes debout, en alternance ou simultanée.",
+  "instructions": [
+   "Coudes collés au buste",
+   "Monter en tournant la paume vers le haut",
+   "Redescendre lentement jusqu’à bras tendu",
+   "Buste immobile"
+  ],
+  "common_mistakes": [
+   "Balancer le buste pour monter la charge",
+   "Coudes qui avancent",
+   "Demi-amplitude"
+  ],
+  "measurement": "reps",
+  "load_type": "two_dumbbells",
+  "is_unilateral": false,
+  "illustration_key": "curl"
+ },
+ {
+  "slug": "triceps",
+  "name": "Extension triceps au-dessus de la tête",
+  "primary_muscle": "Triceps",
+  "secondary_muscles": null,
+  "muscle_group": "arms",
+  "equipment": "1 haltère tenu à deux mains",
+  "description": "Extension des coudes, haltère derrière la tête. Assis sur le banc pour protéger le dos.",
+  "instructions": [
+   "Tenir l’haltère à deux mains sous le disque supérieur",
+   "Coudes pointés vers le plafond, proches de la tête",
+   "Descendre derrière la nuque, remonter bras tendus",
+   "Gainage actif, ne pas cambrer"
+  ],
+  "common_mistakes": [
+   "Coudes qui s’écartent",
+   "Cambrure du bas du dos",
+   "Charge trop lourde qui raccourcit l’amplitude"
+  ],
+  "measurement": "reps",
+  "load_type": "one_dumbbell",
+  "is_unilateral": false,
+  "illustration_key": "triceps"
+ },
+ {
+  "slug": "side-plank",
+  "name": "Gainage latéral",
+  "primary_muscle": "Obliques, sangle abdominale",
+  "secondary_muscles": "Épaules, fessier moyen",
+  "muscle_group": "core",
+  "equipment": "Au sol",
+  "description": "Maintien statique sur l’avant-bras, corps aligné.",
+  "instructions": [
+   "Coude sous l’épaule",
+   "Corps aligné des chevilles à la tête",
+   "Hanches hautes, ne pas les laisser tomber",
+   "Respirer normalement pendant le maintien"
+  ],
+  "common_mistakes": [
+   "Hanches qui s’affaissent",
+   "Bassin qui part vers l’arrière",
+   "Bloquer la respiration"
+  ],
+  "measurement": "time",
+  "load_type": "bodyweight",
+  "is_unilateral": true,
+  "illustration_key": "side-plank"
+ },
+ {
+  "slug": "goblet",
+  "name": "Squat goblet",
+  "primary_muscle": "Quadriceps, fessiers",
+  "secondary_muscles": "Gainage",
+  "muscle_group": "legs",
+  "equipment": "1 haltère tenu contre la poitrine",
+  "description": "Squat avec l’haltère tenu verticalement contre le sternum. Alternative aux fentes bulgares.",
+  "instructions": [
+   "Pieds largeur d’épaules, pointes légèrement ouvertes",
+   "Descendre entre les talons, buste droit",
+   "Genoux dans l’axe des pieds",
+   "Remonter en poussant le sol"
+  ],
+  "common_mistakes": [
+   "Talons qui décollent",
+   "Genoux qui rentrent",
+   "Dos qui s’arrondit en bas"
+  ],
+  "measurement": "reps",
+  "load_type": "one_dumbbell",
+  "is_unilateral": false,
+  "illustration_key": "goblet"
+ },
+ {
+  "slug": "pushup",
+  "name": "Pompes",
+  "primary_muscle": "Pectoraux, triceps",
+  "secondary_muscles": "Épaules, gainage",
+  "muscle_group": "chest",
+  "equipment": "Poids du corps",
+  "description": "Poussée au sol, utile en finition ou les jours sans matériel.",
+  "instructions": [
+   "Mains un peu plus larges que les épaules",
+   "Corps gainé et aligné",
+   "Poitrine à quelques centimètres du sol",
+   "Coudes à environ 45°"
+  ],
+  "common_mistakes": [
+   "Bassin qui s’affaisse",
+   "Tête qui part en avant",
+   "Demi-répétitions"
+  ],
+  "measurement": "reps",
+  "load_type": "bodyweight",
+  "is_unilateral": false,
+  "illustration_key": "pushup"
+ }
+]

@@ -1,0 +1,30 @@
+<?php
+
+// Messages de validation en français (sous-ensemble utilisé par l'application).
+return [
+    'accepted' => 'Le champ :attribute doit être accepté.',
+    'array' => 'Le champ :attribute doit être une liste.',
+    'between' => ['numeric' => 'Entre :min et :max.', 'string' => 'Entre :min et :max caractères.', 'array' => 'Entre :min et :max éléments.'],
+    'boolean' => 'Le champ :attribute doit être vrai ou faux.',
+    'date' => 'Date invalide.',
+    'before_or_equal' => 'La date ne peut pas être dans le futur.',
+    'decimal' => 'Nombre invalide.',
+    'email' => 'Adresse email invalide.',
+    'exists' => 'Valeur inconnue.',
+    'image' => 'Le fichier doit être une image.',
+    'in' => 'Valeur invalide.',
+    'integer' => 'Nombre entier attendu.',
+    'gte' => ['numeric' => 'Doit être supérieur ou égal à :value.'],
+    'lte' => ['numeric' => 'Doit être inférieur ou égal à :value.'],
+    'max' => ['numeric' => 'Au maximum :max.', 'string' => ':max caractères maximum.', 'file' => 'Fichier trop lourd (:max Ko maximum).', 'array' => ':max éléments maximum.'],
+    'mimes' => 'Formats acceptés : :values.',
+    'min' => ['numeric' => 'Au minimum :min.', 'string' => ':min caractères minimum.', 'array' => 'Au moins :min élément(s).'],
+    'numeric' => 'Nombre attendu.',
+    'present' => 'Le champ :attribute est requis.',
+    'regex' => 'Format invalide.',
+    'required' => 'Ce champ est obligatoire.',
+    'required_if' => 'Ce champ est obligatoire.',
+    'string' => 'Texte attendu.',
+    'unique' => 'Cette valeur est déjà utilisée.',
+    'attributes' => [],
+];
