@@ -1,5 +1,4 @@
 import inertia from '@inertiajs/vite';
-import { wayfinder } from '@laravel/vite-plugin-wayfinder';
 import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
 import laravel from 'laravel-vite-plugin';
@@ -21,9 +20,6 @@ export default defineConfig({
                 },
             },
         }),
-        wayfinder({
-            formVariants: true,
-        }),
     ]),
     server: {
         watch: {
@@ -43,9 +39,6 @@ export default defineConfig({
             'public/**',
             'bootstrap/ssr/**',
             'tailwind.config.js',
-            'resources/js/actions/**',
-            'resources/js/routes/**',
-            'resources/js/wayfinder/**',
         ],
         options: {
             denyWarnings: true,

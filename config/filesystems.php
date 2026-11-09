@@ -47,6 +47,20 @@ return [
             'report' => false,
         ],
 
+        // Sauvegardes hors du VPS : tout stockage compatible S3 (Scaleway, OVH, Backblaze B2, Cloudflare R2…).
+        'backups' => [
+            'driver' => env('BACKUP_S3_BUCKET') ? 's3' : 'local',
+            'root' => env('BACKUP_S3_BUCKET') ? env('BACKUP_S3_ROOT', 'recompo') : storage_path('app/backups'),
+            'key' => env('BACKUP_S3_KEY'),
+            'secret' => env('BACKUP_S3_SECRET'),
+            'region' => env('BACKUP_S3_REGION', 'fr-par'),
+            'bucket' => env('BACKUP_S3_BUCKET'),
+            'endpoint' => env('BACKUP_S3_ENDPOINT'),
+            'use_path_style_endpoint' => env('BACKUP_S3_PATH_STYLE', true),
+            'throw' => true,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

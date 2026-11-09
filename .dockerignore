@@ -1,0 +1,15 @@
+.git
+.idea
+node_modules
+vendor
+public/build
+public/hot
+public/storage
+storage/app/*
+storage/logs/*
+storage/framework/*/*
+database/*.sqlite
+.env
+.env.*
+!.env.example
+bootstrap/cache/*.php
