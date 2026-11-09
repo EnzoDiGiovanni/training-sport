@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\DateOnly;
 use App\Enums\SessionStatus;
 use App\Enums\WorkoutType;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,7 +18,7 @@ class WorkoutSession extends Model
     protected function casts(): array
     {
         return [
-            'type' => WorkoutType::class, 'status' => SessionStatus::class, 'performed_on' => 'date:Y-m-d',
+            'type' => WorkoutType::class, 'status' => SessionStatus::class, 'performed_on' => DateOnly::class,
             'started_at' => 'datetime', 'ended_at' => 'datetime', 'planned_snapshot' => 'array',
         ];
     }

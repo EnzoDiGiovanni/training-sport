@@ -3,7 +3,7 @@ export type LoadType = 'two_dumbbells' | 'one_dumbbell' | 'bodyweight';
 export type Measurement = 'reps' | 'time';
 export type SegmentKind = 'warmup' | 'run' | 'fast' | 'recovery' | 'cooldown';
 
-export type LiveRef = { id: number; name: string; type: WorkoutType; started_at: string | null };
+export type LiveRef = { id: number; workout_id: number | null; name: string; type: WorkoutType; started_at: string | null };
 
 export type Exercise = {
     id: number;

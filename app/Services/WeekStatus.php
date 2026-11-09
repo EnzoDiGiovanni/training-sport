@@ -4,13 +4,13 @@ namespace App\Services;
 
 use App\Enums\WorkoutType;
 use App\Models\User;
-use Illuminate\Support\Carbon;
+use Carbon\CarbonInterface;
 
 /** Statut de chaque jour de la semaine (règle 11) : done, today, upcoming, missed, rest, recovery. */
 class WeekStatus
 {
     /** @return list<array{day:int,date:string,status:string,workout_id:?int,session_id:?int}> */
-    public static function for(User $user, Carbon $monday): array
+    public static function for(User $user, CarbonInterface $monday): array
     {
         $program = $user->activeProgram()->with('days.workout')->first();
         $sessions = $user->sessions()->completed()

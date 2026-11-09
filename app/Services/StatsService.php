@@ -7,12 +7,13 @@ use App\Enums\SessionStatus;
 use App\Enums\WorkoutType;
 use App\Models\SessionExercise;
 use App\Models\User;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 
 class StatsService
 {
     /** Séances (course + muscu), km et durée d'une semaine commençant le lundi donné. */
-    public static function week(User $user, Carbon $monday): array
+    public static function week(User $user, CarbonInterface $monday): array
     {
         $list = $user->sessions()->completed()->with('run')
             ->whereBetween('performed_on', [$monday->toDateString(), $monday->copy()->addDays(6)->toDateString()])->get();

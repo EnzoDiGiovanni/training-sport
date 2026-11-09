@@ -22,7 +22,7 @@ class HandleInertiaRequests extends Middleware
             'profile' => $user?->profile?->only('height_cm'),
             // Pastille « Séance en cours » visible partout.
             'live' => $live ? [
-                'id' => $live->id, 'name' => $live->workout_name, 'type' => $live->type,
+                'id' => $live->id, 'workout_id' => $live->workout_id, 'name' => $live->workout_name, 'type' => $live->type,
                 'started_at' => $live->started_at?->toIso8601String(),
             ] : null,
             'flash' => [
