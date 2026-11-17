@@ -35,7 +35,7 @@ class AppServiceProvider extends ServiceProvider
         Date::use(CarbonImmutable::class);
 
         // Derrière le reverse proxy (Coolify / Traefik) : URLs générées en HTTPS.
-        if (app()->isProduction()) {
+        if (str_starts_with(config('app.url'), 'https://')) {
             URL::forceScheme('https');
         }
 
