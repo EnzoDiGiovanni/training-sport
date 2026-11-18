@@ -10,11 +10,22 @@ const page = usePage();
 
 <template>
     <Sheet label="Une séance est déjà en cours" @close="$emit('close')">
-        <div class="sheet-head"><h3 class="grow title-m">Une séance est déjà en cours</h3></div>
-        <div class="sheet-body"><p class="muted">« {{ page.props.live?.name }} » n’est pas terminée. Tu peux la reprendre ou l’abandonner pour commencer « {{ workout.name }} ».</p></div>
+        <div class="sheet-head">
+            <h3 class="title-m grow">Une séance est déjà en cours</h3>
+        </div>
+        <div class="sheet-body">
+            <p class="muted">
+                « {{ page.props.live?.name }} » n’est pas terminée. Tu peux la
+                reprendre ou l’abandonner pour commencer « {{ workout.name }} ».
+            </p>
+        </div>
         <div class="sheet-foot">
-            <button class="btn btn-danger" @click="$emit('abandon')">Abandonner et commencer</button>
-            <Link href="/seance-en-cours" class="btn btn-primary">Reprendre</Link>
+            <button class="btn btn-danger" @click="$emit('abandon')">
+                Abandonner et commencer
+            </button>
+            <Link href="/seance-en-cours" class="btn btn-primary"
+                >Reprendre</Link
+            >
         </div>
     </Sheet>
 </template>

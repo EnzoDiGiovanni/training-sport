@@ -8,10 +8,16 @@ export function useStartWorkout() {
     const conflict = ref<Workout | null>(null);
     function start(w: Workout) {
         const live = page.props.live;
-        if (live && live.workout_id === w.id) return router.visit('/seance-en-cours');
+        if (live && live.workout_id === w.id)
+            return router.visit('/seance-en-cours');
         if (live) return (conflict.value = w);
         router.post(`/seances/${w.id}/demarrer`);
     }
-    const abandonAndStart = () => router.post(`/seances/${conflict.value!.id}/demarrer`, { abandon_current: true }, { onFinish: () => (conflict.value = null) });
+    const abandonAndStart = () =>
+        router.post(
+            `/seances/${conflict.value!.id}/demarrer`,
+            { abandon_current: true },
+            { onFinish: () => (conflict.value = null) },
+        );
     return { start, conflict, abandonAndStart };
 }

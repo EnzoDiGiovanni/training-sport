@@ -1,6 +1,6 @@
 # Prompt Claude Code — Recompo, tracker sportif personnel
 
-> À utiliser **après validation du prototype**. Place ce fichier à la racine du dépôt (`docs/PROMPT.md`) avec le prototype (`docs/prototype.html`), puis lance Claude Code avec : *« Lis docs/PROMPT.md et docs/prototype.html, puis commence par l'étape 0. »*
+> À utiliser **après validation du prototype**. Place ce fichier à la racine du dépôt (`docs/PROMPT.md`) avec le prototype (`docs/prototype.html`), puis lance Claude Code avec : _« Lis docs/PROMPT.md et docs/prototype.html, puis commence par l'étape 0. »_
 
 ---
 
@@ -49,6 +49,7 @@ Principe central : **séparer strictement le programme théorique, les séances 
 ### Tables
 
 **users** (starter kit) + **user_profiles** (1–1)
+
 - `height_cm` smallint, `target_weight_kg` decimal(5,2), `steps_min`, `steps_max` int
 - `run_level_kmh` decimal(4,1), `treadmill_max_kmh` decimal(4,1) défaut 10, `treadmill_incline_max` decimal(4,1)
 - `dumbbell_max_kg` decimal(5,2) défaut 10, `dumbbell_count` tinyint défaut 2, `dumbbells_combinable` bool défaut true, `weight_step_kg` decimal(4,2) défaut 1, `has_bench` bool, `bench_incline` bool
@@ -57,6 +58,7 @@ Principe central : **séparer strictement le programme théorique, les séances 
 - Le **poids actuel n'est pas stocké ici** : c'est la dernière ligne de `weight_records`.
 
 **exercises** (bibliothèque)
+
 - `user_id` nullable (null = exercice de base), `name`, `slug` unique
 - `primary_muscle`, `secondary_muscles` (string), `muscle_group` enum (`chest`, `back`, `legs`, `shoulders`, `arms`, `core`) pour les filtres
 - `equipment`, `description` text, `instructions` JSON (liste), `common_mistakes` JSON (liste)
@@ -67,6 +69,7 @@ Principe central : **séparer strictement le programme théorique, les séances 
 **training_programs** : `user_id`, `name`, `is_active` (un seul actif ; prévoir la table même si un seul programme existe pour l'instant).
 
 **workouts** (séances type du programme)
+
 - `training_program_id`, `name`, `type` enum `run|strength|recovery|rest`, `objective` text, `estimated_duration_min` nullable (calculée pour la course), `position`, `archived_at` nullable
 
 **training_days** : `training_program_id`, `day_of_week` (1 = lundi … 7 = dimanche), `workout_id` nullable (null = repos). Unique (`training_program_id`, `day_of_week`).
@@ -76,6 +79,7 @@ Principe central : **séparer strictement le programme théorique, les séances 
 **run_segments** : `workout_id`, `parent_id` nullable (bloc de répétition), `position`, `kind` enum `warmup|run|fast|recovery|cooldown|repeat`, `label`, `duration_min` decimal(5,2), `speed_min_kmh`, `speed_max_kmh` decimal(4,1), `incline_pct` decimal(4,1), `repeat_count` nullable (uniquement pour `kind = repeat`). Un segment `repeat` contient des enfants (ex. 5 × [1 min à 9,5–10 km/h + 2 min à 7 km/h]).
 
 **workout_sessions** (séances réalisées)
+
 - `user_id`, `workout_id` nullable (`nullOnDelete`), **`workout_name`** (snapshot), `type` (snapshot), `performed_on` date, `started_at`, `ended_at` nullable, `duration_seconds`, `status` enum `in_progress|completed|abandoned`
 - `perceived_effort` tinyint nullable (1 Très facile … 5 Très dur), `comment` text nullable, `activity` nullable (pour la récupération : Marche, Mobilité…)
 - `planned_snapshot` JSON : copie des cibles du programme au démarrage (segments de course ou exercices avec séries/reps/charge/repos)
@@ -89,6 +93,7 @@ Principe central : **séparer strictement le programme théorique, les séances 
 **weight_records** : `user_id`, `measured_on` date, `weight_kg` decimal(5,2). Unique (`user_id`, `measured_on`) : une nouvelle pesée le même jour remplace l'ancienne.
 
 ### Contraintes de suppression
+
 - Supprimer une séance du programme : **archivage** (`archived_at`) si elle a des séances réalisées, sinon suppression. Les jours où elle était planifiée passent en repos.
 - Supprimer un exercice personnalisé utilisé dans le programme : refusé avec un message clair. S'il a un historique : archivage.
 - Aucune cascade de `workouts` ou `exercises` vers `workout_sessions`, `session_exercises`, `exercise_sets`.
@@ -219,6 +224,7 @@ Chaque étape se termine par : tests verts, `pint`, commit, résumé.
 11. **Déploiement sur VPS** (section 13).
 
 ### Tests minimum attendus
+
 - Modifier une séance du programme ne modifie pas une séance réalisée (noms, cibles, séries).
 - Supprimer une séance du programme conserve son historique et passe ses jours en repos.
 - Calcul du volume selon le type de charge et l'unilatéral.

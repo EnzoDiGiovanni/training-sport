@@ -1,241 +1,241 @@
 [
- {
-  "key": "w-ef",
-  "day": 1,
-  "name": "Endurance fondamentale",
-  "type": "run",
-  "objective": "Développer l’endurance et la capacité cardiovasculaire à allure facile.",
-  "estimated_duration_min": null,
-  "exercises": [],
-  "segments": [
-   {
-    "kind": "warmup",
-    "label": "Échauffement",
-    "duration_min": 5,
-    "speed_min_kmh": 6,
-    "speed_max_kmh": 6,
-    "incline_pct": 0
-   },
-   {
-    "kind": "run",
-    "label": "Course",
-    "duration_min": 20,
-    "speed_min_kmh": 8,
-    "speed_max_kmh": 9,
-    "incline_pct": 1
-   },
-   {
-    "kind": "cooldown",
-    "label": "Retour au calme",
-    "duration_min": 5,
-    "speed_min_kmh": 5,
-    "speed_max_kmh": 5,
-    "incline_pct": 0
-   }
-  ]
- },
- {
-  "key": "w-a",
-  "day": 2,
-  "name": "Musculation A",
-  "type": "strength",
-  "objective": "Pectoraux, dos, jambes, épaules, abdominaux.",
-  "estimated_duration_min": 45,
-  "exercises": [
-   {
-    "slug": "db-bench",
-    "sets": 3,
-    "reps_min": 8,
-    "reps_max": 12,
-    "target_weight_kg": 10,
-    "rest_seconds": 90
-   },
-   {
-    "slug": "row",
-    "sets": 3,
-    "reps_min": 10,
-    "reps_max": 12,
-    "target_weight_kg": 20,
-    "rest_seconds": 60
-   },
-   {
-    "slug": "bulgarian",
-    "sets": 3,
-    "reps_min": 8,
-    "reps_max": 10,
-    "target_weight_kg": 8,
-    "rest_seconds": 90
-   },
-   {
-    "slug": "shoulder-press",
-    "sets": 3,
-    "reps_min": 10,
-    "reps_max": 12,
-    "target_weight_kg": 8,
-    "rest_seconds": 75
-   },
-   {
-    "slug": "crunch",
-    "sets": 3,
-    "reps_min": 15,
-    "reps_max": 20,
-    "target_weight_kg": null,
-    "rest_seconds": 45
-   }
-  ],
-  "segments": []
- },
- {
-  "key": "w-frac",
-  "day": 3,
-  "name": "Fractionné",
-  "type": "run",
-  "objective": "Améliorer le cardio et la capacité à tenir une allure rapide.",
-  "estimated_duration_min": null,
-  "exercises": [],
-  "segments": [
-   {
-    "kind": "warmup",
-    "label": "Échauffement",
-    "duration_min": 5,
-    "speed_min_kmh": 6,
-    "speed_max_kmh": 7,
-    "incline_pct": 0
-   },
-   {
-    "kind": "repeat",
-    "repeat_count": 5,
-    "children": [
-     {
-      "kind": "fast",
-      "label": "Accélération",
-      "duration_min": 1,
-      "speed_min_kmh": 9.5,
-      "speed_max_kmh": 10,
-      "incline_pct": 0
-     },
-     {
-      "kind": "recovery",
-      "label": "Récupération active",
-      "duration_min": 2,
-      "speed_min_kmh": 7,
-      "speed_max_kmh": 7,
-      "incline_pct": 0
-     }
-    ]
-   },
-   {
-    "kind": "cooldown",
-    "label": "Retour au calme",
-    "duration_min": 5,
-    "speed_min_kmh": 5,
-    "speed_max_kmh": 5,
-    "incline_pct": 0
-   }
-  ]
- },
- {
-  "key": "w-rec",
-  "day": 4,
-  "name": "Récupération active",
-  "type": "recovery",
-  "objective": "Marche tranquille, mobilité ou étirements légers. Facultatif.",
-  "estimated_duration_min": 20,
-  "exercises": [],
-  "segments": []
- },
- {
-  "key": "w-b",
-  "day": 5,
-  "name": "Musculation B",
-  "type": "strength",
-  "objective": "Jambes, pectoraux, fessiers et bras.",
-  "estimated_duration_min": 45,
-  "exercises": [
-   {
-    "slug": "rdl",
-    "sets": 3,
-    "reps_min": 10,
-    "reps_max": 12,
-    "target_weight_kg": 10,
-    "rest_seconds": 90
-   },
-   {
-    "slug": "incline",
-    "sets": 3,
-    "reps_min": 10,
-    "reps_max": 12,
-    "target_weight_kg": 9,
-    "rest_seconds": 90
-   },
-   {
-    "slug": "hip-thrust",
-    "sets": 3,
-    "reps_min": 12,
-    "reps_max": 15,
-    "target_weight_kg": 20,
-    "rest_seconds": 75
-   },
-   {
-    "slug": "curl",
-    "sets": 3,
-    "reps_min": 10,
-    "reps_max": 12,
-    "target_weight_kg": 8,
-    "rest_seconds": 60
-   },
-   {
-    "slug": "triceps",
-    "sets": 3,
-    "reps_min": 10,
-    "reps_max": 12,
-    "target_weight_kg": 11,
-    "rest_seconds": 60
-   },
-   {
-    "slug": "side-plank",
-    "sets": 2,
-    "reps_min": 30,
-    "reps_max": 30,
-    "target_weight_kg": null,
-    "rest_seconds": 30
-   }
-  ],
-  "segments": []
- },
- {
-  "key": "w-long",
-  "day": 6,
-  "name": "Endurance longue",
-  "type": "run",
-  "objective": "Augmenter progressivement le volume de course.",
-  "estimated_duration_min": null,
-  "exercises": [],
-  "segments": [
-   {
-    "kind": "warmup",
-    "label": "Échauffement",
-    "duration_min": 5,
-    "speed_min_kmh": 6,
-    "speed_max_kmh": 6,
-    "incline_pct": 0
-   },
-   {
-    "kind": "run",
-    "label": "Course",
-    "duration_min": 28,
-    "speed_min_kmh": 8,
-    "speed_max_kmh": 8.5,
-    "incline_pct": 1
-   },
-   {
-    "kind": "cooldown",
-    "label": "Retour au calme",
-    "duration_min": 5,
-    "speed_min_kmh": 5,
-    "speed_max_kmh": 5,
-    "incline_pct": 0
-   }
-  ]
- }
+    {
+        "key": "w-ef",
+        "day": 1,
+        "name": "Endurance fondamentale",
+        "type": "run",
+        "objective": "Développer l’endurance et la capacité cardiovasculaire à allure facile.",
+        "estimated_duration_min": null,
+        "exercises": [],
+        "segments": [
+            {
+                "kind": "warmup",
+                "label": "Échauffement",
+                "duration_min": 5,
+                "speed_min_kmh": 6,
+                "speed_max_kmh": 6,
+                "incline_pct": 0
+            },
+            {
+                "kind": "run",
+                "label": "Course",
+                "duration_min": 20,
+                "speed_min_kmh": 8,
+                "speed_max_kmh": 9,
+                "incline_pct": 1
+            },
+            {
+                "kind": "cooldown",
+                "label": "Retour au calme",
+                "duration_min": 5,
+                "speed_min_kmh": 5,
+                "speed_max_kmh": 5,
+                "incline_pct": 0
+            }
+        ]
+    },
+    {
+        "key": "w-a",
+        "day": 2,
+        "name": "Musculation A",
+        "type": "strength",
+        "objective": "Pectoraux, dos, jambes, épaules, abdominaux.",
+        "estimated_duration_min": 45,
+        "exercises": [
+            {
+                "slug": "db-bench",
+                "sets": 3,
+                "reps_min": 8,
+                "reps_max": 12,
+                "target_weight_kg": 10,
+                "rest_seconds": 90
+            },
+            {
+                "slug": "row",
+                "sets": 3,
+                "reps_min": 10,
+                "reps_max": 12,
+                "target_weight_kg": 20,
+                "rest_seconds": 60
+            },
+            {
+                "slug": "bulgarian",
+                "sets": 3,
+                "reps_min": 8,
+                "reps_max": 10,
+                "target_weight_kg": 8,
+                "rest_seconds": 90
+            },
+            {
+                "slug": "shoulder-press",
+                "sets": 3,
+                "reps_min": 10,
+                "reps_max": 12,
+                "target_weight_kg": 8,
+                "rest_seconds": 75
+            },
+            {
+                "slug": "crunch",
+                "sets": 3,
+                "reps_min": 15,
+                "reps_max": 20,
+                "target_weight_kg": null,
+                "rest_seconds": 45
+            }
+        ],
+        "segments": []
+    },
+    {
+        "key": "w-frac",
+        "day": 3,
+        "name": "Fractionné",
+        "type": "run",
+        "objective": "Améliorer le cardio et la capacité à tenir une allure rapide.",
+        "estimated_duration_min": null,
+        "exercises": [],
+        "segments": [
+            {
+                "kind": "warmup",
+                "label": "Échauffement",
+                "duration_min": 5,
+                "speed_min_kmh": 6,
+                "speed_max_kmh": 7,
+                "incline_pct": 0
+            },
+            {
+                "kind": "repeat",
+                "repeat_count": 5,
+                "children": [
+                    {
+                        "kind": "fast",
+                        "label": "Accélération",
+                        "duration_min": 1,
+                        "speed_min_kmh": 9.5,
+                        "speed_max_kmh": 10,
+                        "incline_pct": 0
+                    },
+                    {
+                        "kind": "recovery",
+                        "label": "Récupération active",
+                        "duration_min": 2,
+                        "speed_min_kmh": 7,
+                        "speed_max_kmh": 7,
+                        "incline_pct": 0
+                    }
+                ]
+            },
+            {
+                "kind": "cooldown",
+                "label": "Retour au calme",
+                "duration_min": 5,
+                "speed_min_kmh": 5,
+                "speed_max_kmh": 5,
+                "incline_pct": 0
+            }
+        ]
+    },
+    {
+        "key": "w-rec",
+        "day": 4,
+        "name": "Récupération active",
+        "type": "recovery",
+        "objective": "Marche tranquille, mobilité ou étirements légers. Facultatif.",
+        "estimated_duration_min": 20,
+        "exercises": [],
+        "segments": []
+    },
+    {
+        "key": "w-b",
+        "day": 5,
+        "name": "Musculation B",
+        "type": "strength",
+        "objective": "Jambes, pectoraux, fessiers et bras.",
+        "estimated_duration_min": 45,
+        "exercises": [
+            {
+                "slug": "rdl",
+                "sets": 3,
+                "reps_min": 10,
+                "reps_max": 12,
+                "target_weight_kg": 10,
+                "rest_seconds": 90
+            },
+            {
+                "slug": "incline",
+                "sets": 3,
+                "reps_min": 10,
+                "reps_max": 12,
+                "target_weight_kg": 9,
+                "rest_seconds": 90
+            },
+            {
+                "slug": "hip-thrust",
+                "sets": 3,
+                "reps_min": 12,
+                "reps_max": 15,
+                "target_weight_kg": 20,
+                "rest_seconds": 75
+            },
+            {
+                "slug": "curl",
+                "sets": 3,
+                "reps_min": 10,
+                "reps_max": 12,
+                "target_weight_kg": 8,
+                "rest_seconds": 60
+            },
+            {
+                "slug": "triceps",
+                "sets": 3,
+                "reps_min": 10,
+                "reps_max": 12,
+                "target_weight_kg": 11,
+                "rest_seconds": 60
+            },
+            {
+                "slug": "side-plank",
+                "sets": 2,
+                "reps_min": 30,
+                "reps_max": 30,
+                "target_weight_kg": null,
+                "rest_seconds": 30
+            }
+        ],
+        "segments": []
+    },
+    {
+        "key": "w-long",
+        "day": 6,
+        "name": "Endurance longue",
+        "type": "run",
+        "objective": "Augmenter progressivement le volume de course.",
+        "estimated_duration_min": null,
+        "exercises": [],
+        "segments": [
+            {
+                "kind": "warmup",
+                "label": "Échauffement",
+                "duration_min": 5,
+                "speed_min_kmh": 6,
+                "speed_max_kmh": 6,
+                "incline_pct": 0
+            },
+            {
+                "kind": "run",
+                "label": "Course",
+                "duration_min": 28,
+                "speed_min_kmh": 8,
+                "speed_max_kmh": 8.5,
+                "incline_pct": 1
+            },
+            {
+                "kind": "cooldown",
+                "label": "Retour au calme",
+                "duration_min": 5,
+                "speed_min_kmh": 5,
+                "speed_max_kmh": 5,
+                "incline_pct": 0
+            }
+        ]
+    }
 ]

@@ -13,10 +13,14 @@ export function useChronometer(sessionId: number) {
         saved = null;
     }
     const s = reactive<State>(saved ?? { running: false, startTs: 0, acc: 0 });
-    watch(s, () => localStorage.setItem(key, JSON.stringify(s)), { deep: true });
+    watch(s, () => localStorage.setItem(key, JSON.stringify(s)), {
+        deep: true,
+    });
 
     const now = useNow();
-    const elapsed = computed(() => (s.acc + (s.running ? now.value - s.startTs : 0)) / 1000);
+    const elapsed = computed(
+        () => (s.acc + (s.running ? now.value - s.startTs : 0)) / 1000,
+    );
 
     return {
         state: s,
@@ -40,7 +44,9 @@ export function useChronometer(sessionId: number) {
 /** Lecture seule (pastille « séance en cours ») sans démarrer d'état. */
 export function chronoElapsed(sessionId: number, now: number): number | null {
     try {
-        const s: State | null = JSON.parse(localStorage.getItem('recompo-chrono-' + sessionId) || 'null');
+        const s: State | null = JSON.parse(
+            localStorage.getItem('recompo-chrono-' + sessionId) || 'null',
+        );
         return s ? (s.acc + (s.running ? now - s.startTs : 0)) / 1000 : null;
     } catch {
         return null;

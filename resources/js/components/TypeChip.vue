@@ -7,5 +7,7 @@ defineProps<{ type: WorkoutType }>();
 </script>
 
 <template>
-    <span class="chip" :class="'chip-' + type"><Icon :name="TYPE_ICON[type]" :size="13" />{{ TYPE_LABEL[type] }}</span>
+    <span class="chip" :class="'chip-' + type"
+        ><Icon :name="TYPE_ICON[type]" :size="13" />{{ TYPE_LABEL[type] }}</span
+    >
 </template>

@@ -3,7 +3,13 @@ export type LoadType = 'two_dumbbells' | 'one_dumbbell' | 'bodyweight';
 export type Measurement = 'reps' | 'time';
 export type SegmentKind = 'warmup' | 'run' | 'fast' | 'recovery' | 'cooldown';
 
-export type LiveRef = { id: number; workout_id: number | null; name: string; type: WorkoutType; started_at: string | null };
+export type LiveRef = {
+    id: number;
+    workout_id: number | null;
+    name: string;
+    type: WorkoutType;
+    started_at: string | null;
+};
 
 export type Exercise = {
     id: number;
@@ -35,7 +41,11 @@ export type Step = {
     cycle?: number;
     of?: number;
 };
-export type RepeatBlock = { kind: 'repeat'; repeat_count: number; children: Step[] };
+export type RepeatBlock = {
+    kind: 'repeat';
+    repeat_count: number;
+    children: Step[];
+};
 export type Segment = Step | RepeatBlock;
 
 export type WorkoutExercise = {
@@ -82,7 +92,12 @@ export type Profile = {
     weight: number | null;
 };
 
-export type SetRow = { id?: number; weight_kg: number; reps: number; is_completed: boolean };
+export type SetRow = {
+    id?: number;
+    weight_kg: number;
+    reps: number;
+    is_completed: boolean;
+};
 
 export type SessionItem = {
     id: number;

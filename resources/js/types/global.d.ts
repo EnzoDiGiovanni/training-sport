@@ -22,7 +22,10 @@ declare module '@inertiajs/core' {
             auth: Auth;
             profile: { height_cm: number } | null;
             live: LiveRef | null;
-            flash: { toast: string | null; created_exercise_id?: number | null };
+            flash: {
+                toast: string | null;
+                created_exercise_id?: number | null;
+            };
             [key: string]: unknown;
         };
     }

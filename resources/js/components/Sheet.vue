@@ -24,7 +24,15 @@ onBeforeUnmount(() => {
 <template>
     <Teleport to="body">
         <div class="scrim" @click.self="emit('close')">
-            <div ref="el" class="sheet" :class="{ wide }" role="dialog" aria-modal="true" :aria-label="label" tabindex="-1">
+            <div
+                ref="el"
+                class="sheet"
+                :class="{ wide }"
+                role="dialog"
+                aria-modal="true"
+                :aria-label="label"
+                tabindex="-1"
+            >
                 <slot />
             </div>
         </div>

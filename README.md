@@ -105,4 +105,5 @@ La restauration remplace la base (client `mysql` requis, présent dans l'image D
 - [ ] Sauvegardes hors du VPS vérifiées : tester une restauration de temps en temps
 
 Côté application : pas de route d'inscription, connexion limitée à 5 tentatives par minute, HTTPS forcé en production, cookies sécurisés, en-têtes de sécurité (`SecurityHeaders`), proxys de confiance (`TRUSTED_PROXIES`).
+
 # training-sport

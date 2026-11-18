@@ -6,20 +6,50 @@ import type { Segment } from '@/types';
 
 const props = defineProps<{ segments: Segment[]; markerMin?: number | null }>();
 const steps = computed(() => flatSteps(props.segments));
-const total = computed(() => steps.value.reduce((a, s) => a + +s.duration_min, 0) || 1);
-const vMax = computed(() => Math.max(10, ...steps.value.map((s) => +s.speed_max_kmh)));
+const total = computed(
+    () => steps.value.reduce((a, s) => a + +s.duration_min, 0) || 1,
+);
+const vMax = computed(() =>
+    Math.max(10, ...steps.value.map((s) => +s.speed_max_kmh)),
+);
 </script>
 
 <template>
     <div class="stack gap-4">
         <div style="position: relative">
             <div class="tl">
-                <div v-for="(s, i) in steps" :key="i" :style="{ flex: s.duration_min + ' 0 0' }" :title="`${s.label} · ${s.duration_min} min · ${speedLabel(s)}`">
-                    <i :style="{ height: Math.max(18, (s.speed_max_kmh / vMax) * 100) + '%', background: KIND_COLOR[s.kind] || 'var(--run)' }"></i>
+                <div
+                    v-for="(s, i) in steps"
+                    :key="i"
+                    :style="{ flex: s.duration_min + ' 0 0' }"
+                    :title="`${s.label} · ${s.duration_min} min · ${speedLabel(s)}`"
+                >
+                    <i
+                        :style="{
+                            height:
+                                Math.max(18, (s.speed_max_kmh / vMax) * 100) +
+                                '%',
+                            background: KIND_COLOR[s.kind] || 'var(--run)',
+                        }"
+                    ></i>
                 </div>
             </div>
-            <span v-if="markerMin != null" :style="{ position: 'absolute', top: '-4px', bottom: '-4px', left: Math.min(100, (markerMin / total) * 100) + '%', width: '2px', background: 'var(--text)', borderRadius: '2px' }"></span>
+            <span
+                v-if="markerMin != null"
+                :style="{
+                    position: 'absolute',
+                    top: '-4px',
+                    bottom: '-4px',
+                    left: Math.min(100, (markerMin / total) * 100) + '%',
+                    width: '2px',
+                    background: 'var(--text)',
+                    borderRadius: '2px',
+                }"
+            ></span>
         </div>
-        <div class="tl-legend"><span>0</span><span>{{ Math.round(total / 2) }} min</span><span>{{ total }} min</span></div>
+        <div class="tl-legend">
+            <span>0</span><span>{{ Math.round(total / 2) }} min</span
+            ><span>{{ total }} min</span>
+        </div>
     </div>
 </template>

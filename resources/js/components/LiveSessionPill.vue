@@ -13,12 +13,20 @@ const clock = computed(() => {
     const l = live.value;
     if (!l) return '';
     const run = l.type === 'run' ? chronoElapsed(l.id, now.value) : null;
-    return fmtClock(run ?? (l.started_at ? (now.value - Date.parse(l.started_at)) / 1000 : 0));
+    return fmtClock(
+        run ??
+            (l.started_at ? (now.value - Date.parse(l.started_at)) / 1000 : 0),
+    );
 });
 </script>
 
 <template>
-    <Link v-if="live" href="/seance-en-cours" class="live-pill" :aria-label="'Reprendre la séance en cours : ' + live.name">
+    <Link
+        v-if="live"
+        href="/seance-en-cours"
+        class="live-pill"
+        :aria-label="'Reprendre la séance en cours : ' + live.name"
+    >
         <span class="live-dot"></span>
         <span class="grow" style="text-align: left">Séance en cours</span>
         <span class="num">{{ clock }}</span>
