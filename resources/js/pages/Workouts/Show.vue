@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import ExerciseIllustration from '@/components/ExerciseIllustration.vue';
 import ExerciseImage from '@/components/ExerciseImage.vue';
 import ExerciseSheet from '@/components/ExerciseSheet.vue';
-import Icon from '@/components/Icon.vue';
 import RunTimeline from '@/components/RunTimeline.vue';
 import StartConflictSheet from '@/components/StartConflictSheet.vue';
 import TypeChip from '@/components/TypeChip.vue';
@@ -36,56 +35,60 @@ const shown = ref<Exercise | null>(null);
 
 <template>
     <Head :title="w.name" />
-    <div class="stack gap-12">
-        <div>
-            <Link href="/" class="btn btn-ghost btn-sm"
-                ><Icon name="back" />Accueil</Link
-            >
-        </div>
-        <div class="page-head">
-            <div class="stack gap-8">
-                <div class="row gap-8">
-                    <TypeChip :type="w.type" /><span
-                        class="faint num"
-                        style="font-size: 13px"
-                        >{{ durationLabel(w) }}</span
-                    >
-                </div>
-                <h1 class="title-xl">{{ w.name }}</h1>
-                <p class="muted" style="max-width: 60ch">{{ w.objective }}</p>
-            </div>
-            <div class="row">
-                <Link :href="`/programme/seances/${w.id}`" class="btn"
-                    ><Icon name="edit" />Modifier</Link
+    <div class="space-y-3">
+        <UButton
+            to="/"
+            icon="i-lucide-chevron-left"
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            class="-ml-2"
+            >Accueil</UButton
+        >
+        <UPageHeader
+            :title="w.name"
+            :description="w.objective ?? undefined"
+            :ui="{ root: 'pt-0' }"
+        >
+            <template #headline>
+                <TypeChip :type="w.type" /><span
+                    class="text-sm text-muted tabular-nums"
+                    >{{ durationLabel(w) }}</span
                 >
-                <button
+            </template>
+            <template #links>
+                <UButton
+                    :to="`/programme/seances/${w.id}`"
+                    icon="i-lucide-pencil"
+                    color="neutral"
+                    variant="outline"
+                    >Modifier</UButton
+                >
+                <UButton
                     v-if="w.type === 'run' || w.type === 'strength'"
-                    class="btn btn-primary"
+                    icon="i-lucide-play"
                     @click="start(w)"
+                    >Commencer</UButton
                 >
-                    <Icon name="play" />Commencer
-                </button>
-            </div>
-        </div>
+            </template>
+        </UPageHeader>
     </div>
 
     <div
         v-if="w.type === 'run'"
-        class="grid-2"
-        style="grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr)"
+        class="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]"
     >
-        <div class="card card-pad stack gap-16">
-            <div class="section-head">
-                <h2>Déroulé de la séance</h2>
-                <span class="faint num" style="font-size: 13px"
-                    >≈ {{ fmt(estRunKm(w.segments)) }} km</span
-                >
-            </div>
+        <UCard>
+            <template #header>
+                <div class="flex items-baseline justify-between">
+                    <h2 class="font-semibold">Déroulé de la séance</h2>
+                    <span class="text-sm text-muted tabular-nums"
+                        >≈ {{ fmt(estRunKm(w.segments)) }} km</span
+                    >
+                </div>
+            </template>
             <RunTimeline :segments="w.segments" />
-            <table
-                class="sets"
-                style="margin: 0 -20px; width: calc(100% + 40px)"
-            >
+            <table class="sets mt-4">
                 <thead>
                     <tr>
                         <th>Phase</th>
@@ -100,121 +103,116 @@ const shown = ref<Exercise | null>(null);
                             <tr>
                                 <td
                                     colspan="4"
-                                    style="
-                                        text-align: left;
-                                        padding-left: 18px;
-                                        color: var(--accent);
-                                        font-size: 13px;
-                                        font-weight: 500;
-                                    "
+                                    class="text-sm font-medium text-primary"
                                 >
                                     Répéter {{ s.repeat_count }} fois
                                 </td>
                             </tr>
                             <tr v-for="(x, j) in s.children" :key="j">
-                                <td style="padding-left: 30px">
-                                    {{ x.label }}
+                                <td class="pl-6">{{ x.label }}</td>
+                                <td class="tabular-nums">
+                                    {{ x.duration_min }} min
                                 </td>
-                                <td class="num">{{ x.duration_min }} min</td>
-                                <td class="num">{{ speedLabel(x) }}</td>
-                                <td class="num">
+                                <td class="tabular-nums">
+                                    {{ speedLabel(x) }}
+                                </td>
+                                <td class="tabular-nums">
                                     {{ fmt(x.incline_pct || 0, 0) }} %
                                 </td>
                             </tr>
                         </template>
                         <tr v-else>
                             <td>{{ s.label }}</td>
-                            <td class="num">{{ s.duration_min }} min</td>
-                            <td class="num">{{ speedLabel(s) }}</td>
-                            <td class="num">
+                            <td class="tabular-nums">
+                                {{ s.duration_min }} min
+                            </td>
+                            <td class="tabular-nums">{{ speedLabel(s) }}</td>
+                            <td class="tabular-nums">
                                 {{ fmt(s.incline_pct || 0, 0) }} %
                             </td>
                         </tr>
                     </template>
                 </tbody>
             </table>
-        </div>
-        <div class="stack gap-16">
+        </UCard>
+        <div class="space-y-4">
             <div class="illo">
                 <ExerciseIllustration
                     illustration-key="run"
                     label="Course sur tapis"
                 />
             </div>
-            <div class="card card-pad stack gap-12">
-                <span class="label">Dernière fois</span>
+            <UCard>
+                <template #header>
+                    <h2 class="font-semibold">Dernière fois</h2>
+                </template>
                 <template v-if="last && last.run">
-                    <div class="row" style="justify-content: space-between">
-                        <span class="muted">{{ cap(dateLong(last.date)) }}</span
-                        ><span class="faint" style="font-size: 12.5px">{{
+                    <div class="mb-4 flex justify-between text-sm">
+                        <span class="text-muted">{{
+                            cap(dateLong(last.date))
+                        }}</span
+                        ><span class="text-dimmed">{{
                             daysAgo(last.date)
                         }}</span>
                     </div>
-                    <div class="grid-3">
-                        <div class="meta-item">
-                            <span class="k">Distance</span
-                            ><span class="v num"
-                                >{{ fmt(last.run.distance_km, 2) }} km</span
-                            >
-                        </div>
-                        <div class="meta-item">
-                            <span class="k">Durée</span
-                            ><span class="v num">{{
-                                fmtClock(last.duration_seconds)
-                            }}</span>
-                        </div>
-                        <div class="meta-item">
-                            <span class="k">Vit. moy.</span
-                            ><span class="v num">{{
-                                fmt(last.run.average_speed_kmh)
-                            }}</span>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div
+                            v-for="[k, v] in [
+                                [
+                                    'Distance',
+                                    fmt(last.run.distance_km, 2) + ' km',
+                                ],
+                                ['Durée', fmtClock(last.duration_seconds)],
+                                ['Vit. moy.', fmt(last.run.average_speed_kmh)],
+                            ]"
+                            :key="k"
+                        >
+                            <p class="text-xs text-muted">{{ k }}</p>
+                            <p class="font-semibold tabular-nums">{{ v }}</p>
                         </div>
                     </div>
                 </template>
-                <p v-else class="faint">Pas encore réalisée.</p>
-            </div>
-            <div class="notice">
-                <Icon name="info" /><span
-                    >Tapis limité à
-                    {{
-                        fmt(
-                            profile.treadmill_max_kmh,
-                            profile.treadmill_max_kmh % 1 ? 1 : 0,
-                        )
-                    }}
-                    km/h. Inclinaison conseillée : 1 % pour compenser l’absence
-                    de résistance de l’air, si c’est confortable.</span
-                >
-            </div>
+                <p v-else class="text-sm text-muted">Pas encore réalisée.</p>
+            </UCard>
+            <UAlert
+                variant="subtle"
+                color="info"
+                icon="i-lucide-info"
+                :description="`Tapis limité à ${fmt(
+                    profile.treadmill_max_kmh,
+                    profile.treadmill_max_kmh % 1 ? 1 : 0,
+                )} km/h. Inclinaison conseillée : 1 % pour compenser l’absence de résistance de l’air, si c’est confortable.`"
+            />
         </div>
     </div>
 
-    <div v-else-if="w.type === 'strength'" class="w-grid">
-        <button
+    <div
+        v-else-if="w.type === 'strength'"
+        class="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4"
+    >
+        <UCard
             v-for="(we, i) in w.exercises"
             :key="we.exercise_id"
-            class="card lib-card"
+            as="button"
+            class="overflow-hidden text-left transition hover:shadow-md hover:ring-primary/40"
+            :ui="{ body: 'p-0 sm:p-0' }"
             @click="shown = ex(we.exercise_id)"
         >
-            <div class="illo">
+            <div class="illo rounded-none">
                 <ExerciseImage :exercise="ex(we.exercise_id)" />
             </div>
-            <div class="body">
-                <div class="row" style="justify-content: space-between">
-                    <span class="faint num" style="font-size: 12px">{{
+            <div class="flex flex-col gap-0.5 p-4">
+                <div class="flex justify-between text-xs text-muted">
+                    <span class="tabular-nums">{{
                         String(i + 1).padStart(2, '0')
                     }}</span
-                    ><span class="faint" style="font-size: 12px"
-                        >Repos {{ fmtClock(we.rest_seconds) }}</span
-                    >
+                    ><span>Repos {{ fmtClock(we.rest_seconds) }}</span>
                 </div>
-                <span style="font-weight: 600; font-size: 15px">{{
-                    ex(we.exercise_id).name
-                }}</span>
-                <span class="faint" style="font-size: 13px">{{
+                <span class="font-semibold">{{ ex(we.exercise_id).name }}</span>
+                <span class="text-sm text-muted">{{
                     ex(we.exercise_id).primary_muscle
                 }}</span>
-                <span class="num" style="font-size: 14px; margin-top: 6px"
+                <span class="mt-2 text-sm tabular-nums"
                     >{{ we.sets }} ×
                     {{
                         repsLabel(we.reps_min, we.reps_max, ex(we.exercise_id))
@@ -222,14 +220,14 @@ const shown = ref<Exercise | null>(null);
                     ·
                     {{ kgLabel(we.target_weight_kg, ex(we.exercise_id)) }}</span
                 >
-                <span class="faint num" style="font-size: 12.5px">{{
+                <span class="text-xs text-dimmed tabular-nums">{{
                     lastPerf[we.exercise_id]
                         ? 'Dernière fois : ' +
                           setsSummary(lastPerf[we.exercise_id]!)
                         : 'Pas encore réalisé'
                 }}</span>
             </div>
-        </button>
+        </UCard>
     </div>
 
     <ExerciseSheet v-if="shown" :exercise="shown" @close="shown = null" />

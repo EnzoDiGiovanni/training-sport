@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import ExerciseImage from '@/components/ExerciseImage.vue';
-import Icon from '@/components/Icon.vue';
 import Sheet from '@/components/Sheet.vue';
 import type { Exercise } from '@/types';
 
@@ -20,67 +19,48 @@ const list = computed(() =>
 </script>
 
 <template>
-    <Sheet wide label="Ajouter un exercice" @close="emit('close')">
-        <div class="sheet-head">
-            <h3 class="title-m grow">Ajouter un exercice</h3>
-            <button
-                class="btn btn-ghost btn-icon"
-                aria-label="Fermer"
-                @click="emit('close')"
+    <Sheet wide title="Ajouter un exercice" @close="emit('close')">
+        <div class="flex gap-2">
+            <UInput
+                v-model="q"
+                icon="i-lucide-search"
+                placeholder="Rechercher"
+                aria-label="Rechercher"
+                class="flex-1"
+            />
+            <UButton
+                icon="i-lucide-plus"
+                color="neutral"
+                variant="outline"
+                @click="emit('create')"
+                >Créer</UButton
             >
-                <Icon name="x" />
-            </button>
         </div>
-        <div class="sheet-body">
-            <div class="row gap-8">
-                <input
-                    v-model="q"
-                    class="input grow"
-                    placeholder="Rechercher"
-                    aria-label="Rechercher"
-                />
-                <button class="btn" @click="emit('create')">
-                    <Icon name="plus" />Créer
-                </button>
-            </div>
-            <div
-                class="lib-grid"
-                style="
-                    grid-template-columns: repeat(
-                        auto-fill,
-                        minmax(180px, 1fr)
-                    );
-                "
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3">
+            <button
+                v-for="e in list"
+                :key="e.id"
+                class="overflow-hidden rounded-lg border border-default text-left transition hover:border-primary/50 hover:shadow-sm"
+                @click="emit('pick', e)"
             >
-                <button
-                    v-for="e in list"
-                    :key="e.id"
-                    class="card lib-card"
-                    @click="emit('pick', e)"
-                >
-                    <div class="illo">
-                        <ExerciseImage
-                            :exercise="e"
-                            :animated="false"
-                            pose="end"
-                        />
-                    </div>
-                    <div class="body">
-                        <span style="font-weight: 600; font-size: 14px">{{
-                            e.name
-                        }}</span>
-                        <span class="faint" style="font-size: 12px">{{
-                            e.primary_muscle
-                        }}</span>
-                        <span
-                            v-if="selected.includes(e.id)"
-                            class="chip"
-                            style="align-self: flex-start"
-                            >Déjà dans la séance</span
-                        >
-                    </div>
-                </button>
-            </div>
+                <div class="illo rounded-none">
+                    <ExerciseImage :exercise="e" :animated="false" pose="end" />
+                </div>
+                <div class="flex flex-col gap-0.5 p-3">
+                    <span class="text-sm font-semibold">{{ e.name }}</span>
+                    <span class="text-xs text-muted">{{
+                        e.primary_muscle
+                    }}</span>
+                    <UBadge
+                        v-if="selected.includes(e.id)"
+                        color="neutral"
+                        variant="subtle"
+                        size="sm"
+                        class="mt-1 self-start"
+                        >Déjà dans la séance</UBadge
+                    >
+                </div>
+            </button>
         </div>
     </Sheet>
 </template>

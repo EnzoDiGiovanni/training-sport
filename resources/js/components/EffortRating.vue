@@ -10,16 +10,22 @@ const L: [number, string][] = [
 </script>
 
 <template>
-    <div class="rating" role="group" aria-label="Ressenti de 1 à 5">
-        <button
+    <div
+        class="grid grid-cols-5 gap-1.5"
+        role="group"
+        aria-label="Ressenti de 1 à 5"
+    >
+        <UButton
             v-for="[n, l] in L"
             :key="n"
-            type="button"
+            :color="model === n ? 'primary' : 'neutral'"
+            :variant="model === n ? 'soft' : 'outline'"
             :aria-pressed="model === n"
+            class="flex-col justify-center gap-0.5 py-2 text-[11px]"
             @click="model = n"
         >
-            <b>{{ n }}</b
+            <b class="text-base">{{ n }}</b
             >{{ l }}
-        </button>
+        </UButton>
     </div>
 </template>

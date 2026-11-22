@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import { computed, reactive, ref, watch } from 'vue';
 import EffortRating from '@/components/EffortRating.vue';
 import ExerciseIllustration from '@/components/ExerciseIllustration.vue';
-import Icon from '@/components/Icon.vue';
 import RunTimeline from '@/components/RunTimeline.vue';
 import { useChronometer } from '@/composables/useChronometer';
 import {
@@ -125,69 +124,71 @@ function abandon() {
 
 <template>
     <Head :title="session.name" />
-    <div class="live-head">
-        <div class="inner">
-            <Link
-                href="/"
-                class="btn btn-ghost btn-icon"
-                aria-label="Retour à l’accueil (la séance continue)"
-                ><Icon name="back"
-            /></Link>
-            <div class="stack grow">
-                <span style="font-weight: 600">{{ session.name }}</span
-                ><span class="faint" style="font-size: 12.5px"
-                    >Course sur tapis · {{ runMinutes(segments) }} min
-                    prévues</span
-                >
-            </div>
-            <button class="btn btn-ghost" @click="abandon">Abandonner</button>
+    <div class="flex items-center gap-3">
+        <UButton
+            to="/"
+            icon="i-lucide-chevron-left"
+            color="neutral"
+            variant="ghost"
+            aria-label="Retour à l’accueil (la séance continue)"
+        />
+        <div class="min-w-0 flex-1">
+            <p class="truncate font-semibold">{{ session.name }}</p>
+            <p class="text-xs text-muted">
+                Course sur tapis · {{ runMinutes(segments) }} min prévues
+            </p>
         </div>
+        <UButton color="error" variant="ghost" @click="abandon"
+            >Abandonner</UButton
+        >
     </div>
-    <div class="run-grid">
-        <div class="card card-pad stack gap-20">
-            <div
-                class="stack gap-8"
-                style="align-items: center; padding: 12px 0 4px"
-            >
-                <span class="faint" style="font-size: 12.5px">Chronomètre</span
-                ><span class="chrono" role="timer">{{ fmtClock(el) }}</span>
+    <div class="grid items-start gap-6 lg:grid-cols-2">
+        <UCard :ui="{ body: 'flex flex-col gap-6' }">
+            <div class="flex flex-col items-center gap-1 pt-2">
+                <span class="text-sm text-muted">Chronomètre</span
+                ><span
+                    class="text-6xl font-semibold tracking-tight tabular-nums"
+                    role="timer"
+                    >{{ fmtClock(el) }}</span
+                >
             </div>
-            <div class="row" style="justify-content: center">
-                <button
+            <div class="flex justify-center gap-2">
+                <UButton
                     v-if="chrono.state.running"
-                    class="btn btn-lg"
+                    size="xl"
+                    color="neutral"
+                    variant="outline"
+                    icon="i-lucide-pause"
                     @click="chrono.pause"
+                    >Pause</UButton
                 >
-                    <Icon name="pause" />Pause
-                </button>
-                <button
+                <UButton
                     v-else
-                    class="btn btn-primary btn-lg"
+                    size="xl"
+                    icon="i-lucide-play"
                     @click="chrono.start"
+                    >{{ el > 0 ? 'Reprendre' : 'Démarrer' }}</UButton
                 >
-                    <Icon name="play" />{{ el > 0 ? 'Reprendre' : 'Démarrer' }}
-                </button>
-                <button
-                    class="btn btn-lg btn-ghost"
+                <UButton
+                    size="xl"
+                    color="neutral"
+                    variant="ghost"
+                    icon="i-lucide-rotate-ccw"
                     :disabled="el <= 0"
                     aria-label="Remettre le chrono à zéro"
                     @click="chrono.reset"
-                >
-                    <Icon name="reset" />
-                </button>
+                />
             </div>
-            <div v-if="current" class="now-seg">
+            <div
+                v-if="current"
+                class="flex items-center gap-3 rounded-lg bg-elevated p-4"
+            >
                 <span
-                    class="sw"
-                    :style="{
-                        width: '6px',
-                        height: '44px',
-                        borderRadius: '3px',
-                        background: KIND_COLOR[current.step.kind],
-                    }"
+                    class="h-11 w-1.5 flex-none rounded-full"
+                    :style="{ background: KIND_COLOR[current.step.kind] }"
                 ></span>
-                <div class="stack grow">
-                    <span class="faint" style="font-size: 12px"
+                <div class="flex min-w-0 flex-1 flex-col">
+                    <span class="text-xs text-muted"
                         >{{
                             current.step.cycle
                                 ? 'Cycle ' +
@@ -198,10 +199,8 @@ function abandon() {
                                 : ''
                         }}Phase actuelle</span
                     >
-                    <span style="font-weight: 600">{{
-                        current.step.label
-                    }}</span>
-                    <span class="faint num" style="font-size: 12.5px">{{
+                    <span class="font-semibold">{{ current.step.label }}</span>
+                    <span class="text-xs text-muted tabular-nums">{{
                         current.next
                             ? 'Ensuite : ' +
                               current.next.label +
@@ -210,183 +209,174 @@ function abandon() {
                             : 'Dernière phase'
                     }}</span>
                 </div>
-                <div class="stack" style="align-items: flex-end">
-                    <span class="sp">{{
+                <div class="flex flex-col items-end">
+                    <span class="text-3xl font-semibold tabular-nums">{{
                         speedLabel(current.step).replace(' km/h', '')
                     }}</span
-                    ><span class="faint num" style="font-size: 12px"
+                    ><span class="text-xs text-muted tabular-nums"
                         >km/h · reste {{ fmtClock(current.left) }}</span
                     >
                 </div>
             </div>
-            <div v-else class="now-seg">
-                <div class="grow">
-                    <span style="font-weight: 600">{{
-                        el > 0 ? 'Programme terminé' : 'Prêt à démarrer'
-                    }}</span
-                    ><br />
-                    <span class="faint" style="font-size: 12.5px">{{
+            <div v-else class="rounded-lg bg-elevated p-4">
+                <p class="font-semibold">
+                    {{ el > 0 ? 'Programme terminé' : 'Prêt à démarrer' }}
+                </p>
+                <p class="text-sm text-muted">
+                    {{
                         el > 0
                             ? 'Saisis les données affichées par le tapis puis enregistre.'
                             : 'Lance le chrono quand tu démarres le tapis.'
-                    }}</span>
-                </div>
+                    }}
+                </p>
             </div>
             <RunTimeline :segments="segments" :marker-min="el / 60" />
-            <div
-                class="illo"
-                style="max-width: 260px; align-self: center; width: 100%"
-            >
+            <div class="illo w-full max-w-64 self-center">
                 <ExerciseIllustration
                     illustration-key="run"
                     :animated="chrono.state.running"
                     label="Course sur tapis"
                 />
             </div>
-        </div>
+        </UCard>
 
-        <form class="card card-pad stack gap-16" @submit.prevent="save">
-            <div class="section-head">
-                <h2>Données de la séance</h2>
-                <span class="faint" style="font-size: 12.5px"
-                    >Relevées sur le tapis</span
-                >
-            </div>
-            <div class="field">
-                <label for="rf-dur">Durée totale</label>
-                <div class="row gap-8">
-                    <div class="input-unit grow">
-                        <input
-                            id="rf-dur"
+        <UCard>
+            <template #header>
+                <div class="flex items-baseline justify-between">
+                    <h2 class="font-semibold">Données de la séance</h2>
+                    <span class="text-xs text-muted"
+                        >Relevées sur le tapis</span
+                    >
+                </div>
+            </template>
+            <form class="space-y-5" @submit.prevent="save">
+                <UFormField label="Durée totale" :error="errors.duration">
+                    <div class="flex gap-2">
+                        <UInput
                             v-model="f.duration"
-                            class="input num"
-                            :class="{ 'is-error': errors.duration }"
                             placeholder="mm:ss"
-                        /><span>mm:ss</span>
-                    </div>
-                    <button
-                        type="button"
-                        class="btn"
-                        :disabled="el <= 0"
-                        @click="useChrono"
-                    >
-                        Utiliser le chrono
-                    </button>
-                </div>
-                <span v-if="errors.duration" class="err">{{
-                    errors.duration
-                }}</span>
-            </div>
-            <div class="grid-2">
-                <div class="field">
-                    <label for="rf-dist">Distance</label>
-                    <div class="input-unit">
-                        <input
-                            id="rf-dist"
-                            v-model="f.distance"
-                            class="input num"
-                            :class="{ 'is-error': errors.distance_km }"
-                            inputmode="decimal"
-                            placeholder="4,25"
-                        /><span>km</span>
-                    </div>
-                    <span v-if="errors.distance_km" class="err">{{
-                        errors.distance_km
-                    }}</span>
-                </div>
-                <div class="field">
-                    <span class="label">Vitesse moyenne</span>
-                    <div
-                        class="input num"
-                        style="
-                            display: flex;
-                            align-items: center;
-                            background: var(--surface-2);
-                            border-color: var(--border);
-                        "
-                        aria-live="polite"
-                    >
-                        <template v-if="!isNaN(calc.avg)"
-                            >{{ fmt(calc.avg, 2) }} km/h</template
-                        ><span v-else class="faint" style="font-size: 13px"
-                            >calculée automatiquement</span
+                            class="flex-1 tabular-nums"
+                        >
+                            <template #trailing
+                                ><span class="text-xs text-muted"
+                                    >mm:ss</span
+                                ></template
+                            >
+                        </UInput>
+                        <UButton
+                            color="neutral"
+                            variant="outline"
+                            :disabled="el <= 0"
+                            @click="useChrono"
+                            >Utiliser le chrono</UButton
                         >
                     </div>
-                </div>
-            </div>
-            <div class="grid-2">
-                <div class="field">
-                    <label for="rf-max">Vitesse max</label>
-                    <div class="input-unit">
-                        <input
-                            id="rf-max"
+                </UFormField>
+                <div class="grid grid-cols-2 gap-4">
+                    <UFormField label="Distance" :error="errors.distance_km">
+                        <UInput
+                            v-model="f.distance"
+                            inputmode="decimal"
+                            placeholder="4,25"
+                            class="w-full tabular-nums"
+                        >
+                            <template #trailing
+                                ><span class="text-xs text-muted"
+                                    >km</span
+                                ></template
+                            >
+                        </UInput>
+                    </UFormField>
+                    <UFormField label="Vitesse moyenne" aria-live="polite">
+                        <UInput
+                            :model-value="
+                                !isNaN(calc.avg)
+                                    ? fmt(calc.avg, 2) + ' km/h'
+                                    : ''
+                            "
+                            placeholder="calculée automatiquement"
+                            disabled
+                            class="w-full tabular-nums"
+                        />
+                    </UFormField>
+                    <UFormField
+                        label="Vitesse max"
+                        :error="errors.max_speed_kmh"
+                    >
+                        <UInput
                             v-model="f.max"
-                            class="input num"
-                            :class="{ 'is-error': errors.max_speed_kmh }"
                             inputmode="decimal"
                             :placeholder="String(profile.treadmill_max_kmh)"
-                        /><span>km/h</span>
-                    </div>
-                    <span v-if="errors.max_speed_kmh" class="err">{{
-                        errors.max_speed_kmh
-                    }}</span>
-                </div>
-                <div class="field">
-                    <label for="rf-inc">Inclinaison</label>
-                    <div class="input-unit">
-                        <input
-                            id="rf-inc"
+                            class="w-full tabular-nums"
+                        >
+                            <template #trailing
+                                ><span class="text-xs text-muted"
+                                    >km/h</span
+                                ></template
+                            >
+                        </UInput>
+                    </UFormField>
+                    <UFormField label="Inclinaison" :error="errors.incline_pct">
+                        <UInput
                             v-model="f.incline"
-                            class="input num"
-                            :class="{ 'is-error': errors.incline_pct }"
                             inputmode="decimal"
-                        /><span>%</span>
-                    </div>
-                    <span v-if="errors.incline_pct" class="err">{{
-                        errors.incline_pct
-                    }}</span>
+                            class="w-full tabular-nums"
+                        >
+                            <template #trailing
+                                ><span class="text-xs text-muted"
+                                    >%</span
+                                ></template
+                            >
+                        </UInput>
+                    </UFormField>
                 </div>
-            </div>
-            <div v-if="block" class="field">
-                <label for="rf-cyc">Cycles effectués</label>
-                <div class="input-unit">
-                    <input
-                        id="rf-cyc"
-                        v-model="f.cycles"
-                        class="input num"
-                        :class="{ 'is-error': errors.cycles_completed }"
-                        inputmode="numeric"
-                    /><span>/ {{ block.repeat_count }}</span>
-                </div>
-                <span v-if="errors.cycles_completed" class="err">{{
-                    errors.cycles_completed
-                }}</span>
-            </div>
-            <div class="field">
-                <span class="label">Ressenti</span
-                ><EffortRating v-model="f.rpe" />
-            </div>
-            <div class="field">
-                <label for="rf-comment">Commentaire</label
-                ><textarea
-                    id="rf-comment"
-                    v-model="f.comment"
-                    class="input"
-                    placeholder="Sensations, fréquence cardiaque, conditions…"
-                ></textarea>
-            </div>
-            <div class="notice">
-                <Icon name="flame" /><span
-                    ><template v-if="!isNaN(kcal)"
-                        >Dépense estimée :
-                        <b class="num">≈ {{ fmtInt(kcal) }} kcal</b>. </template
-                    >Estimation indicative (environ 1 kcal par kg et par km),
-                    marge d’erreur de ±20 % ou plus.</span
+                <UFormField
+                    v-if="block"
+                    label="Cycles effectués"
+                    :error="errors.cycles_completed"
                 >
-            </div>
-            <button class="btn btn-primary btn-lg btn-block" :disabled="saving">
-                <Icon name="check" />Enregistrer la séance
-            </button>
-        </form>
+                    <UInput
+                        v-model="f.cycles"
+                        inputmode="numeric"
+                        class="w-full tabular-nums"
+                    >
+                        <template #trailing
+                            ><span class="text-xs text-muted"
+                                >/ {{ block.repeat_count }}</span
+                            ></template
+                        >
+                    </UInput>
+                </UFormField>
+                <UFormField label="Ressenti"
+                    ><EffortRating v-model="f.rpe"
+                /></UFormField>
+                <UFormField label="Commentaire">
+                    <UTextarea
+                        v-model="f.comment"
+                        placeholder="Sensations, fréquence cardiaque, conditions…"
+                        class="w-full"
+                    />
+                </UFormField>
+                <UAlert
+                    color="neutral"
+                    variant="subtle"
+                    icon="i-lucide-flame"
+                    :description="
+                        (!isNaN(kcal)
+                            ? `Dépense estimée : ≈ ${fmtInt(kcal)} kcal. `
+                            : '') +
+                        'Estimation indicative (environ 1 kcal par kg et par km), marge d’erreur de ±20 % ou plus.'
+                    "
+                />
+                <UButton
+                    type="submit"
+                    size="lg"
+                    block
+                    icon="i-lucide-check"
+                    :loading="saving"
+                    >Enregistrer la séance</UButton
+                >
+            </form>
+        </UCard>
     </div>
 </template>

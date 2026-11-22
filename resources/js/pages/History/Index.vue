@@ -67,59 +67,55 @@ const open = ref<Session | null>(null);
 
 <template>
     <Head title="Entraînements" />
-    <div class="page-head">
-        <div class="stack gap-4">
-            <span class="eyebrow">Historique</span>
-            <h1 class="title-xl">Entraînements</h1>
-        </div>
-        <span class="faint num" style="font-size: 13px"
-            >{{ sessions.length }} séances enregistrées</span
-        >
+    <UPageHeader
+        headline="Historique"
+        title="Entraînements"
+        :description="sessions.length + ' séances enregistrées'"
+    />
+    <div class="flex flex-wrap items-center justify-between gap-3">
+        <UTabs
+            v-model="type"
+            :items="FILTERS.map(([value, label]) => ({ value, label }))"
+            :content="false"
+            :ui="{ list: 'w-auto', trigger: 'grow-0' }"
+            variant="pill"
+            size="sm"
+        />
+        <UTabs
+            v-model="by"
+            :items="[
+                { value: 'week', label: 'Par semaine' },
+                { value: 'month', label: 'Par mois' },
+            ]"
+            :content="false"
+            :ui="{ list: 'w-auto', trigger: 'grow-0' }"
+            size="sm"
+            aria-label="Regrouper par"
+        />
     </div>
-    <div class="row wrapflex" style="justify-content: space-between">
-        <div class="filters">
-            <button
-                v-for="[v, l] in FILTERS"
-                :key="v"
-                class="fchip"
-                :aria-pressed="type === v"
-                @click="type = v"
-            >
-                {{ l }}
-            </button>
+    <section v-for="g in groups" :key="g.key" class="space-y-2">
+        <div class="flex items-baseline justify-between px-1 text-sm">
+            <span class="font-semibold">{{ label(g) }}</span
+            ><span class="text-muted tabular-nums">{{ sum(g) }}</span>
         </div>
-        <div class="seg" role="group" aria-label="Regrouper par">
-            <button :aria-pressed="by === 'week'" @click="by = 'week'">
-                Par semaine
-            </button>
-            <button :aria-pressed="by === 'month'" @click="by = 'month'">
-                Par mois
-            </button>
-        </div>
-    </div>
-    <section v-for="g in groups" :key="g.key" class="week-group">
-        <div class="week-group-head">
-            <span style="color: var(--text); font-weight: 500">{{
-                label(g)
-            }}</span
-            ><span class="num">{{ sum(g) }}</span>
-        </div>
-        <div class="card">
+        <UCard :ui="{ body: 'p-0 sm:p-0 divide-y divide-default' }">
             <HistoryRow
                 v-for="s in g.items"
                 :key="s.id"
                 :s="s"
                 @open="open = s"
             />
-        </div>
+        </UCard>
     </section>
-    <div v-if="!groups.length" class="card empty">
-        {{
+    <UEmpty
+        v-if="!groups.length"
+        icon="i-lucide-calendar-x"
+        :title="
             sessions.length
                 ? 'Aucune séance pour ce filtre.'
                 : 'Aucune séance enregistrée. Lance ta première séance depuis l’accueil.'
-        }}
-    </div>
+        "
+    />
     <SessionSheet
         v-if="open"
         :key="open.id"

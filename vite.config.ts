@@ -1,4 +1,5 @@
 import inertia from '@inertiajs/vite';
+import ui from '@nuxt/ui/vite';
 import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
 import laravel from 'laravel-vite-plugin';
@@ -17,6 +18,25 @@ export default defineConfig({
                 transformAssetUrls: {
                     base: null,
                     includeAbsolute: false,
+                },
+            },
+        }),
+        ui({
+            router: 'inertia',
+            icon: { clientBundle: { scan: true } },
+            ui: {
+                colors: {
+                    primary: 'emerald',
+                    secondary: 'violet',
+                    info: 'blue',
+                    neutral: 'zinc',
+                },
+                pageHeader: {
+                    slots: {
+                        root: 'border-b-0 py-0 sm:py-2',
+                        title: 'text-2xl sm:text-3xl',
+                        description: 'text-base',
+                    },
                 },
             },
         }),

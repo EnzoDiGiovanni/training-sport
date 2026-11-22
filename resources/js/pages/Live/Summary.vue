@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import EffortRating from '@/components/EffortRating.vue';
 import ExerciseImage from '@/components/ExerciseImage.vue';
-import Icon from '@/components/Icon.vue';
 import {
     cap,
     dateLong,
@@ -84,45 +83,44 @@ const save = () =>
 
 <template>
     <Head title="Récapitulatif" />
-    <div
-        class="card card-pad stack gap-20"
-        style="max-width: 720px; margin: 0 auto; width: 100%"
-    >
-        <div class="recap-hero">
-            <span class="recap-badge"><Icon name="check" /></span>
-            <h1 class="title-l">Séance terminée</h1>
-            <p class="muted">{{ s.name }} · {{ cap(dateLong(s.date)) }}</p>
+    <UCard class="mx-auto w-full max-w-2xl" :ui="{ body: 'space-y-6 sm:p-8' }">
+        <div class="flex flex-col items-center gap-2 text-center">
+            <span
+                class="grid size-14 place-items-center rounded-full bg-primary/10 text-primary"
+                ><UIcon name="i-lucide-check" class="size-7"
+            /></span>
+            <h1 class="text-2xl font-semibold">Séance terminée</h1>
+            <p class="text-muted">{{ s.name }} · {{ cap(dateLong(s.date)) }}</p>
         </div>
-        <div class="grid-4">
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div
                 v-for="[k, v] in tiles"
                 :key="k"
-                class="card"
-                style="padding: 14px; background: var(--surface-2)"
+                class="rounded-lg bg-elevated p-3.5"
             >
-                <div class="faint" style="font-size: 12px">{{ k }}</div>
-                <div class="num" style="font-size: 19px; font-weight: 600">
-                    {{ v }}
-                </div>
+                <p class="text-xs text-muted">{{ k }}</p>
+                <p class="text-lg font-semibold tabular-nums">{{ v }}</p>
             </div>
         </div>
-        <div v-if="records.length" class="stack gap-8">
-            <div v-for="p in records" :key="p" class="pr">
-                <Icon name="trophy" /><span>{{ p }}</span>
-            </div>
+        <div v-if="records.length" class="space-y-2">
+            <UAlert
+                v-for="p in records"
+                :key="p"
+                color="warning"
+                variant="subtle"
+                icon="i-lucide-trophy"
+                :title="p"
+            />
         </div>
 
-        <div v-if="s.type === 'strength'" class="card">
+        <div
+            v-if="s.type === 'strength'"
+            class="divide-y divide-default rounded-lg border border-default"
+        >
             <div
                 v-for="it in s.exercises"
                 :key="it.id"
-                class="ex-row"
-                style="
-                    cursor: default;
-                    padding: 12px 16px;
-                    border-bottom: 1px solid var(--border);
-                    border-radius: 0;
-                "
+                class="flex items-center gap-3 px-4 py-3"
             >
                 <span class="thumb"
                     ><ExerciseImage
@@ -134,22 +132,23 @@ const save = () =>
                         :animated="false"
                         pose="end"
                 /></span>
-                <span class="stack grow"
-                    ><span class="nm">{{ it.name }}</span
-                    ><span class="sub num">{{ setsSummary(it) }}</span></span
+                <span class="flex min-w-0 flex-1 flex-col"
+                    ><span class="text-sm font-medium">{{ it.name }}</span
+                    ><span class="text-xs text-muted tabular-nums">{{
+                        setsSummary(it)
+                    }}</span></span
                 >
                 <span
                     v-if="
                         previousVolumes[it.id] != null &&
                         it.load_type !== 'bodyweight'
                     "
-                    class="num"
+                    class="text-sm tabular-nums"
                     :class="
                         itemVolume(it) - previousVolumes[it.id]! >= 0
-                            ? 'delta-good'
-                            : 'delta-bad'
+                            ? 'text-success'
+                            : 'text-warning'
                     "
-                    style="font-size: 13px"
                     >{{
                         itemVolume(it) - previousVolumes[it.id]! >= 0
                             ? '+'
@@ -160,74 +159,65 @@ const save = () =>
                     kg</span
                 >
             </div>
-            <p v-if="!s.exercises.length" class="empty">
-                Aucune série validée.
-            </p>
+            <UEmpty
+                v-if="!s.exercises.length"
+                variant="naked"
+                title="Aucune série validée."
+            />
         </div>
-        <div v-else-if="runDeltas.length" class="card card-pad stack gap-12">
-            <span class="label"
-                >Comparé à la dernière fois ({{
-                    dateShort(previous!.date)
-                }})</span
-            >
-            <div class="grid-3">
-                <div
-                    v-for="[k, v, u, d] in runDeltas"
-                    :key="k"
-                    class="meta-item"
-                >
-                    <span class="k">{{ k }}</span
-                    ><span
-                        class="v num"
-                        :class="v >= 0 ? 'delta-good' : 'delta-bad'"
-                        >{{ v >= 0 ? '+' : '' }}{{ fmt(v, d) }}{{ u }}</span
+        <div
+            v-else-if="runDeltas.length"
+            class="space-y-3 rounded-lg border border-default p-4"
+        >
+            <p class="text-sm font-semibold">
+                Comparé à la dernière fois ({{ dateShort(previous!.date) }})
+            </p>
+            <div class="grid grid-cols-3 gap-3">
+                <div v-for="[k, v, u, d] in runDeltas" :key="k">
+                    <p class="text-xs text-muted">{{ k }}</p>
+                    <p
+                        class="font-semibold tabular-nums"
+                        :class="v >= 0 ? 'text-success' : 'text-warning'"
                     >
+                        {{ v >= 0 ? '+' : '' }}{{ fmt(v, d) }}{{ u }}
+                    </p>
                 </div>
             </div>
         </div>
 
         <template v-if="s.type === 'strength'">
-            <div class="field">
-                <span class="label">Ressenti</span
-                ><EffortRating v-model="form.rpe" />
-            </div>
-            <div class="field">
-                <label for="sumComment">Commentaire</label
-                ><textarea
-                    id="sumComment"
+            <UFormField label="Ressenti"
+                ><EffortRating v-model="form.rpe"
+            /></UFormField>
+            <UFormField label="Commentaire">
+                <UTextarea
                     v-model="form.comment"
-                    class="input"
                     placeholder="Comment s’est passée la séance ?"
-                ></textarea>
-            </div>
+                    class="w-full"
+                />
+            </UFormField>
         </template>
-        <template v-else>
-            <p
-                v-if="s.rpe || s.comment"
-                class="muted"
-                style="font-size: 13.5px"
-            >
-                {{ s.comment }}
-            </p>
-        </template>
-        <p v-if="sessionError" class="err">{{ sessionError }}</p>
-        <p class="faint" style="font-size: 12.5px">
+        <p v-else-if="s.rpe || s.comment" class="text-sm text-muted">
+            {{ s.comment }}
+        </p>
+        <p v-if="sessionError" class="text-sm text-error">{{ sessionError }}</p>
+        <p class="text-xs text-dimmed">
             Dépense énergétique estimée : ≈ {{ fmtInt(kcal) }} kcal. Estimation
             indicative, non mesurée.
         </p>
-        <div class="row wrapflex" style="justify-content: flex-end">
-            <Link href="/seance-en-cours" class="btn btn-ghost">{{
+        <div class="flex flex-wrap justify-end gap-2">
+            <UButton to="/seance-en-cours" color="neutral" variant="ghost">{{
                 s.type === 'strength'
                     ? 'Reprendre la séance'
                     : 'Modifier les données'
-            }}</Link>
-            <button
-                class="btn btn-primary btn-lg"
-                :disabled="form.processing"
+            }}</UButton>
+            <UButton
+                size="lg"
+                icon="i-lucide-check"
+                :loading="form.processing"
                 @click="save"
+                >Enregistrer</UButton
             >
-                <Icon name="check" />Enregistrer
-            </button>
         </div>
-    </div>
+    </UCard>
 </template>

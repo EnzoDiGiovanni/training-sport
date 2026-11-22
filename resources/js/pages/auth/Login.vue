@@ -9,78 +9,47 @@ const submit = () =>
 
 <template>
     <Head title="Connexion" />
-    <main
-        style="
-            min-height: 100vh;
-            display: grid;
-            place-items: center;
-            padding: 24px;
-        "
-    >
-        <form
-            class="card card-pad stack gap-16"
-            style="width: min(380px, 100%)"
-            @submit.prevent="submit"
-        >
-            <div class="brand" style="padding: 0">
-                <span class="brand-mark"
-                    ><svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#0B0F00"
-                        stroke-width="2.6"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
+    <main class="grid min-h-dvh place-items-center bg-muted p-6">
+        <UCard class="w-full max-w-sm">
+            <form class="space-y-5" @submit.prevent="submit">
+                <div class="flex items-center gap-2.5 font-semibold">
+                    <span
+                        class="grid size-7 place-items-center rounded-md bg-primary text-inverted"
                     >
-                        <path d="M4 16l5-5 4 4 7-8" /></svg></span
-                >Recompo
-            </div>
-            <h1 class="title-l">Connexion</h1>
-            <p v-if="status" class="notice">{{ status }}</p>
-            <div class="field">
-                <label for="email">Email</label>
-                <input
-                    id="email"
-                    v-model="form.email"
-                    type="email"
-                    class="input"
-                    :class="{ 'is-error': form.errors.email }"
-                    autocomplete="email"
-                    required
-                    autofocus
-                />
-                <span v-if="form.errors.email" class="err">{{
-                    form.errors.email
-                }}</span>
-            </div>
-            <div class="field">
-                <label for="password">Mot de passe</label>
-                <input
-                    id="password"
-                    v-model="form.password"
-                    type="password"
-                    class="input"
-                    autocomplete="current-password"
-                    required
-                />
-            </div>
-            <label class="row" style="font-size: 13.5px; cursor: pointer"
-                ><input
-                    v-model="form.remember"
-                    type="checkbox"
-                    style="
-                        width: 18px;
-                        height: 18px;
-                        accent-color: var(--accent);
-                    "
-                />Rester connecté</label
-            >
-            <button
-                class="btn btn-primary btn-lg btn-block"
-                :disabled="form.processing"
-            >
-                Se connecter
-            </button>
-        </form>
+                        <UIcon name="i-lucide-activity" class="size-4" />
+                    </span>
+                    Recompo
+                </div>
+                <h1 class="text-xl font-semibold">Connexion</h1>
+                <UAlert v-if="status" variant="subtle" :title="status" />
+                <UFormField label="Email" :error="form.errors.email">
+                    <UInput
+                        v-model="form.email"
+                        type="email"
+                        autocomplete="email"
+                        required
+                        autofocus
+                        class="w-full"
+                    />
+                </UFormField>
+                <UFormField label="Mot de passe">
+                    <UInput
+                        v-model="form.password"
+                        type="password"
+                        autocomplete="current-password"
+                        required
+                        class="w-full"
+                    />
+                </UFormField>
+                <UCheckbox v-model="form.remember" label="Rester connecté" />
+                <UButton
+                    type="submit"
+                    size="lg"
+                    block
+                    :loading="form.processing"
+                    >Se connecter</UButton
+                >
+            </form>
+        </UCard>
     </main>
 </template>

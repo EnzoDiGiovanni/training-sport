@@ -24,12 +24,19 @@ const clock = computed(() => {
     <Link
         v-if="live"
         href="/seance-en-cours"
-        class="live-pill"
+        class="flex items-center gap-2.5 rounded-lg border border-primary/30 bg-default px-3 py-2.5 text-sm font-medium text-primary shadow-sm"
         :aria-label="'Reprendre la séance en cours : ' + live.name"
     >
-        <span class="live-dot"></span>
-        <span class="grow" style="text-align: left">Séance en cours</span>
-        <span class="num">{{ clock }}</span>
-        <span class="sr">Reprendre</span>
+        <span class="relative flex size-2">
+            <span
+                class="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-60"
+            ></span>
+            <span
+                class="relative inline-flex size-2 rounded-full bg-primary"
+            ></span>
+        </span>
+        <span class="flex-1 text-left">Séance en cours</span>
+        <span class="tabular-nums">{{ clock }}</span>
+        <span class="sr-only">Reprendre</span>
     </Link>
 </template>

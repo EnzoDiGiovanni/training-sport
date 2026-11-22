@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
-import { computed, nextTick, reactive, ref } from 'vue';
+import { Head, router } from '@inertiajs/vue3';
+import { computed, nextTick, reactive, ref, watch } from 'vue';
 import ExerciseImage from '@/components/ExerciseImage.vue';
 import ExerciseSheet from '@/components/ExerciseSheet.vue';
 import Icon from '@/components/Icon.vue';
@@ -14,10 +14,10 @@ import {
     fmtClock,
     fmtInt,
     fmtKg,
-    num,
 } from '@/composables/useFormat';
 import { useLiveSession } from '@/composables/useLiveSession';
 import { useNow } from '@/composables/useNow';
+import { useMediaQuery } from '@vueuse/core';
 import { useRestTimer } from '@/composables/useRestTimer';
 import {
     exerciseById,
@@ -49,6 +49,13 @@ const items = reactive<SessionItem[]>(
 const { save, flush, status } = useLiveSession(items);
 const timer = useRestTimer(props.session.id);
 const now = useNow();
+// Sur mobile, un exercice à la fois (la barre du haut sert à naviguer).
+const compact = useMediaQuery('(max-width: 1023px)');
+// Vibration quand le repos se termine (si le téléphone le permet).
+watch(
+    () => !!timer.rest.value && timer.left.value <= 0,
+    (over) => over && navigator.vibrate?.([200, 100, 200]),
+);
 // Durée calculée depuis started_at (serveur), pas par un compteur client.
 const elapsed = computed(
     () => (now.value - Date.parse(props.session.started_at)) / 1000,
@@ -85,14 +92,15 @@ function jump(i: number) {
             ?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
     );
 }
+// Champ vidé (null) : on garde la valeur précédente au lieu de la réécrire pendant la saisie.
 function setField(
     it: SessionItem,
     j: number,
     f: 'weight_kg' | 'reps',
-    v: string,
+    v: number | null | undefined,
 ) {
-    const n = num(v);
-    if (!isNaN(n)) it.sets[j][f] = f === 'reps' ? Math.round(n) : n;
+    if (v == null || isNaN(v)) return;
+    it.sets[j][f] = f === 'reps' ? Math.round(v) : v;
     cur.value = items.indexOf(it);
     save();
 }
@@ -172,113 +180,122 @@ const prevTxt = (it: SessionItem, j: number) => {
 
 <template>
     <Head :title="session.name" />
-    <div class="live-head">
-        <div class="inner">
-            <Link
-                href="/"
-                class="btn btn-ghost btn-icon"
+    <div
+        class="sticky top-0 z-20 -mx-4 -mt-6 space-y-3 border-b border-default bg-default/90 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:-mt-10 lg:py-4"
+    >
+        <div class="flex flex-wrap items-center gap-3">
+            <UButton
+                to="/"
+                icon="i-lucide-chevron-left"
+                color="neutral"
+                variant="ghost"
                 aria-label="Retour à l’accueil (la séance continue)"
-                ><Icon name="back"
-            /></Link>
-            <div class="stack live-title grow">
-                <span style="font-weight: 600">{{ session.name }}</span>
-                <span class="faint" style="font-size: 12.5px"
-                    >Séance en cours<template v-if="status === 'saving'">
+            />
+            <div class="min-w-0 flex-1">
+                <p class="truncate font-semibold">{{ session.name }}</p>
+                <p class="text-xs text-muted">
+                    Séance en cours<template v-if="status === 'saving'">
                         · enregistrement…</template
                     ><template v-else-if="status === 'error'">
                         ·
-                        <span style="color: var(--danger)"
+                        <span class="text-error"
                             >non enregistré, vérifie la connexion</span
                         ></template
-                    ></span
-                >
+                    >
+                </p>
             </div>
-            <div class="live-kpis">
-                <div class="stack">
-                    <span class="k">Durée</span
-                    ><span class="v">{{ fmtClock(elapsed) }}</span>
+            <dl
+                class="order-last flex w-full gap-6 tabular-nums sm:order-none sm:w-auto"
+            >
+                <div>
+                    <dt class="text-xs text-muted">Durée</dt>
+                    <dd class="font-semibold">{{ fmtClock(elapsed) }}</dd>
                 </div>
-                <div class="stack">
-                    <span class="k">Volume</span
-                    ><span class="v">{{ fmtInt(kpis.vol) }} kg</span>
+                <div>
+                    <dt class="text-xs text-muted">Volume</dt>
+                    <dd class="font-semibold">{{ fmtInt(kpis.vol) }} kg</dd>
                 </div>
-                <div class="stack">
-                    <span class="k">Séries</span
-                    ><span class="v">{{ kpis.done }}/{{ kpis.total }}</span>
+                <div>
+                    <dt class="text-xs text-muted">Séries</dt>
+                    <dd class="font-semibold">
+                        {{ kpis.done }}/{{ kpis.total }}
+                    </dd>
                 </div>
-            </div>
-            <button class="btn btn-primary" @click="finish">Terminer</button>
+            </dl>
+            <UButton @click="finish">Terminer</UButton>
         </div>
-        <div class="live-progress" aria-hidden="true">
-            <i
-                :style="{
-                    width:
-                        (kpis.total ? (kpis.done / kpis.total) * 100 : 0) + '%',
-                }"
-            ></i>
-        </div>
-        <div class="inner" style="margin-top: 12px">
-            <div class="ex-nav">
-                <button
-                    v-for="(e, i) in items"
-                    :key="e.id"
-                    :class="{ 'is-cur': i === cur, 'is-complete': complete(e) }"
-                    @click="jump(i)"
-                >
-                    <Icon v-if="complete(e)" name="check" /><span
-                        v-else
-                        class="num faint"
-                        >{{ i + 1 }}</span
-                    >{{ e.name.split(' ')[0] }}
-                </button>
-            </div>
+        <UProgress
+            :model-value="kpis.total ? (kpis.done / kpis.total) * 100 : 0"
+            size="xs"
+            aria-hidden="true"
+        />
+        <div class="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-0.5">
+            <UButton
+                v-for="(e, i) in items"
+                :key="e.id"
+                size="sm"
+                :color="i === cur ? 'primary' : 'neutral'"
+                :variant="
+                    i === cur ? 'soft' : complete(e) ? 'subtle' : 'outline'
+                "
+                class="flex-none"
+                @click="jump(i)"
+            >
+                <Icon
+                    v-if="complete(e)"
+                    name="check"
+                    class="text-primary"
+                /><span v-else class="text-muted tabular-nums">{{ i + 1 }}</span
+                >{{ e.name.split(' ')[0] }}
+            </UButton>
         </div>
     </div>
 
-    <div class="stack gap-16" style="margin-top: 8px">
-        <article
+    <div class="space-y-4" :class="{ 'pb-40 lg:pb-24': timer.rest.value }">
+        <UCard
             v-for="(it, i) in items"
+            v-show="!compact || i === cur"
             :id="'ex-' + i"
             :key="it.id"
-            class="card ex-card"
-            :class="{ 'is-cur': i === cur }"
+            as="article"
+            class="scroll-mt-48 transition"
+            :class="{ 'ring-2 ring-primary/50': i === cur }"
+            :ui="{ body: 'space-y-4' }"
         >
-            <div class="ex-top">
+            <div class="grid gap-4 sm:grid-cols-[200px_1fr]">
                 <button
                     class="illo"
-                    style="padding: 0"
                     :aria-label="'Voir les consignes : ' + it.name"
                     @click="shown = ex(it) ?? null"
                 >
                     <ExerciseImage :exercise="img(it)" />
                 </button>
-                <div class="stack gap-8" style="min-width: 0">
-                    <div
-                        class="row"
-                        style="
-                            justify-content: space-between;
-                            align-items: flex-start;
-                        "
-                    >
-                        <div class="stack">
-                            <span class="faint num" style="font-size: 12px"
-                                >Exercice {{ i + 1 }} / {{ items.length }}</span
-                            >
-                            <h3 style="font-size: 17px">{{ it.name }}</h3>
+                <div class="flex min-w-0 flex-col gap-2">
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <p class="text-xs text-muted tabular-nums">
+                                Exercice {{ i + 1 }} / {{ items.length }}
+                            </p>
+                            <h3 class="text-lg font-semibold">{{ it.name }}</h3>
                         </div>
-                        <button
-                            class="btn btn-ghost btn-icon"
-                            aria-label="Performances précédentes"
-                            @click="openHistory(it)"
-                        >
-                            <Icon name="history" />
-                        </button>
+                        <UTooltip text="Performances précédentes">
+                            <UButton
+                                icon="i-lucide-history"
+                                color="neutral"
+                                variant="ghost"
+                                aria-label="Performances précédentes"
+                                @click="openHistory(it)"
+                            />
+                        </UTooltip>
                     </div>
-                    <span class="faint" style="font-size: 13px">{{
-                        ex(it)?.primary_muscle
-                    }}</span>
-                    <div class="row wrapflex gap-8">
-                        <span class="chip num"
+                    <p class="text-sm text-muted">
+                        {{ ex(it)?.primary_muscle }}
+                    </p>
+                    <div class="flex flex-wrap gap-1.5">
+                        <UBadge
+                            color="neutral"
+                            variant="subtle"
+                            class="tabular-nums"
                             >{{ it.sets.length }} ×
                             {{
                                 it.target_reps_min === it.target_reps_max
@@ -287,34 +304,42 @@ const prevTxt = (it: SessionItem, j: number) => {
                                       '–' +
                                       it.target_reps_max
                             }}{{ it.measurement === 'time' ? ' s' : ''
-                            }}{{ it.is_unilateral ? ' / côté' : '' }}</span
+                            }}{{ it.is_unilateral ? ' / côté' : '' }}</UBadge
                         >
-                        <span class="chip num"
-                            ><Icon name="clock" :size="12" />Repos
-                            {{ fmtClock(it.rest_seconds) }}</span
+                        <UBadge
+                            color="neutral"
+                            variant="subtle"
+                            icon="i-lucide-clock"
+                            class="tabular-nums"
+                            >Repos {{ fmtClock(it.rest_seconds) }}</UBadge
                         >
-                        <span
+                        <UBadge
                             v-if="it.load_type !== 'bodyweight'"
-                            class="chip num"
-                            >Cible {{ kgLabel(it.target_weight_kg, it) }}</span
+                            color="neutral"
+                            variant="subtle"
+                            class="tabular-nums"
+                            >Cible
+                            {{ kgLabel(it.target_weight_kg, it) }}</UBadge
                         >
                     </div>
-                    <span class="faint num" style="font-size: 12.5px">{{
-                        prev[it.id]
-                            ? 'Dernière fois (' +
-                              daysAgo(prev[it.id]!.date) +
-                              ') : ' +
-                              setsSummary(prev[it.id]!)
-                            : 'Première fois sur cet exercice'
-                    }}</span>
+                    <p class="text-xs text-dimmed tabular-nums">
+                        {{
+                            prev[it.id]
+                                ? 'Dernière fois (' +
+                                  daysAgo(prev[it.id]!.date) +
+                                  ') : ' +
+                                  setsSummary(prev[it.id]!)
+                                : 'Première fois sur cet exercice'
+                        }}
+                    </p>
                 </div>
             </div>
-            <div style="overflow-x: auto">
+            <div class="overflow-x-auto">
                 <table class="sets">
                     <thead>
                         <tr>
                             <th>Série</th>
-                            <th>Précédent</th>
+                            <th class="hidden sm:table-cell">Précédent</th>
                             <th>
                                 {{
                                     it.load_type === 'bodyweight'
@@ -331,7 +356,7 @@ const prevTxt = (it: SessionItem, j: number) => {
                                         : 'Reps'
                                 }}
                             </th>
-                            <th aria-label="Validée">
+                            <th aria-label="Validée" class="text-center">
                                 <Icon name="check" :size="14" />
                             </th>
                         </tr>
@@ -340,30 +365,37 @@ const prevTxt = (it: SessionItem, j: number) => {
                         <tr
                             v-for="(s, j) in it.sets"
                             :key="j"
-                            :class="{ 'is-done': s.is_completed }"
+                            :class="{ 'bg-primary/5': s.is_completed }"
                         >
-                            <td>
-                                <span class="set-num">{{ j + 1 }}</span>
+                            <td class="text-muted tabular-nums">{{ j + 1 }}</td>
+                            <td
+                                class="hidden text-xs text-dimmed tabular-nums sm:table-cell"
+                            >
+                                {{ prevTxt(it, j) }}
                             </td>
-                            <td class="prev">{{ prevTxt(it, j) }}</td>
                             <td>
                                 <span
                                     v-if="it.load_type === 'bodyweight'"
-                                    class="faint"
-                                    style="font-size: 13px"
+                                    class="text-sm text-muted"
                                     >PDC</span
                                 >
-                                <input
+                                <UInputNumber
                                     v-else
-                                    class="cell-in"
-                                    :class="{
-                                        'is-error':
-                                            maxFor(it) &&
-                                            s.weight_kg > maxFor(it),
-                                    }"
-                                    inputmode="decimal"
+                                    :model-value="s.weight_kg"
+                                    :min="0"
+                                    :step="profile.weight_step_kg || 1"
+                                    :step-snapping="false"
+                                    size="sm"
+                                    class="w-24 tabular-nums sm:w-28"
+                                    :color="
+                                        maxFor(it) && s.weight_kg > maxFor(it)
+                                            ? 'error'
+                                            : undefined
+                                    "
+                                    :highlight="
+                                        !!maxFor(it) && s.weight_kg > maxFor(it)
+                                    "
                                     :aria-label="'Charge série ' + (j + 1)"
-                                    :value="fmtKg(s.weight_kg)"
                                     :title="
                                         maxFor(it) && s.weight_kg > maxFor(it)
                                             ? 'Au-delà de ton matériel (' +
@@ -371,21 +403,19 @@ const prevTxt = (it: SessionItem, j: number) => {
                                               ' kg max)'
                                             : ''
                                     "
-                                    @input="
-                                        setField(
-                                            it,
-                                            j,
-                                            'weight_kg',
-                                            ($event.target as HTMLInputElement)
-                                                .value,
-                                        )
+                                    @update:model-value="
+                                        (v) => setField(it, j, 'weight_kg', v)
                                     "
                                 />
                             </td>
                             <td>
-                                <input
-                                    class="cell-in"
-                                    inputmode="numeric"
+                                <UInputNumber
+                                    :model-value="s.reps"
+                                    :min="0"
+                                    :step="it.measurement === 'time' ? 5 : 1"
+                                    :step-snapping="false"
+                                    size="sm"
+                                    class="w-24 tabular-nums sm:w-28"
                                     :aria-label="
                                         (it.measurement === 'time'
                                             ? 'Durée'
@@ -393,65 +423,81 @@ const prevTxt = (it: SessionItem, j: number) => {
                                         ' série ' +
                                         (j + 1)
                                     "
-                                    :value="s.reps"
-                                    @input="
-                                        setField(
-                                            it,
-                                            j,
-                                            'reps',
-                                            ($event.target as HTMLInputElement)
-                                                .value,
-                                        )
+                                    @update:model-value="
+                                        (v) => setField(it, j, 'reps', v)
                                     "
                                 />
                             </td>
-                            <td>
-                                <button
-                                    class="check"
+                            <td class="text-center">
+                                <UButton
+                                    icon="i-lucide-check"
+                                    size="lg"
+                                    :color="
+                                        s.is_completed ? 'primary' : 'neutral'
+                                    "
+                                    :variant="
+                                        s.is_completed ? 'solid' : 'outline'
+                                    "
                                     :aria-label="'Valider la série ' + (j + 1)"
                                     :aria-pressed="s.is_completed"
                                     @click="toggle(i, j)"
-                                >
-                                    <Icon name="check" />
-                                </button>
+                                />
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-            <div class="ex-foot">
-                <button class="btn btn-sm" @click="addSet(it)">
-                    <Icon name="plus" />Série
-                </button>
-                <button
-                    class="btn btn-sm btn-ghost"
+            <div class="flex flex-wrap items-center gap-2">
+                <UButton
+                    icon="i-lucide-plus"
+                    color="neutral"
+                    variant="outline"
+                    size="sm"
+                    @click="addSet(it)"
+                    >Série</UButton
+                >
+                <UButton
+                    icon="i-lucide-minus"
+                    color="neutral"
+                    variant="ghost"
+                    size="sm"
                     :disabled="it.sets.length <= 1"
                     @click="rmSet(it)"
+                    >Retirer</UButton
                 >
-                    <Icon name="minus" />Retirer
-                </button>
-                <input
-                    v-model="it.note"
-                    class="note-in"
+                <UInput
+                    :model-value="it.note ?? ''"
+                    variant="soft"
+                    size="sm"
                     placeholder="Note (sensations, réglage du banc…)"
                     :aria-label="'Note pour ' + it.name"
-                    @input="save"
+                    class="min-w-48 flex-1"
+                    @update:model-value="
+                        (v) => {
+                            it.note = String(v);
+                            save();
+                        }
+                    "
                 />
-                <button
+                <UButton
                     v-if="i < items.length - 1"
-                    class="btn btn-sm ex-next"
+                    trailing-icon="i-lucide-chevron-right"
+                    color="neutral"
+                    variant="outline"
+                    size="sm"
                     @click="jump(i + 1)"
+                    >Exercice suivant</UButton
                 >
-                    Exercice suivant<Icon name="next" />
-                </button>
             </div>
-        </article>
+        </UCard>
     </div>
-    <div class="row live-end">
-        <button class="btn btn-ghost" @click="abandon">Abandonner</button>
-        <button class="btn btn-primary btn-lg" @click="finish">
-            <Icon name="check" />Terminer la séance
-        </button>
+    <div class="flex items-center justify-between gap-2">
+        <UButton color="error" variant="ghost" @click="abandon"
+            >Abandonner</UButton
+        >
+        <UButton size="lg" icon="i-lucide-check" @click="finish"
+            >Terminer la séance</UButton
+        >
     </div>
 
     <RestTimer
@@ -463,70 +509,41 @@ const prevTxt = (it: SessionItem, j: number) => {
         @skip="timer.stop"
     />
     <ExerciseSheet v-if="shown" :exercise="shown" @close="shown = null" />
-    <Sheet v-if="noSets" label="Aucune série validée" @close="noSets = false">
-        <div class="sheet-head">
-            <h3 class="title-m grow">Aucune série validée</h3>
-        </div>
-        <div class="sheet-body">
-            <p class="muted">
-                Valide au moins une série avec le bouton ✓ pour enregistrer la
-                séance, ou abandonne-la.
-            </p>
-        </div>
-        <div class="sheet-foot">
-            <button class="btn btn-danger" @click="abandon">
-                Abandonner la séance</button
-            ><button class="btn btn-primary" @click="noSets = false">
-                Continuer
-            </button>
-        </div>
+    <Sheet v-if="noSets" title="Aucune série validée" @close="noSets = false">
+        <p class="text-muted">
+            Valide au moins une série avec le bouton ✓ pour enregistrer la
+            séance, ou abandonne-la.
+        </p>
+        <template #footer>
+            <UButton color="error" variant="soft" @click="abandon"
+                >Abandonner la séance</UButton
+            >
+            <UButton @click="noSets = false">Continuer</UButton>
+        </template>
     </Sheet>
     <Sheet
         v-if="historyFor"
-        label="Performances précédentes"
+        :title="historyFor.it.name"
+        description="Performances précédentes"
         @close="historyFor = null"
     >
-        <div class="sheet-head">
-            <span class="thumb" style="width: 52px; height: 40px"
-                ><ExerciseImage
-                    :exercise="img(historyFor.it)"
-                    :animated="false"
-                    pose="end"
-            /></span>
-            <div class="stack grow">
-                <span class="faint" style="font-size: 12px"
-                    >Performances précédentes</span
-                >
-                <h3 class="title-m">{{ historyFor.it.name }}</h3>
-            </div>
-            <button
-                class="btn btn-ghost btn-icon"
-                aria-label="Fermer"
-                @click="historyFor = null"
-            >
-                <Icon name="x" />
-            </button>
-        </div>
-        <div class="sheet-body">
+        <div class="divide-y divide-default">
             <div
                 v-for="h in historyFor.list.slice(0, 8)"
                 :key="h.session_id"
-                class="stack gap-4"
-                style="
-                    padding-bottom: 12px;
-                    border-bottom: 1px solid var(--border);
-                "
+                class="space-y-2 py-3 first:pt-0"
             >
-                <div class="row" style="justify-content: space-between">
-                    <span style="font-weight: 500">{{
-                        cap(dateLong(h.date))
-                    }}</span
-                    ><span class="faint" style="font-size: 12.5px">{{
-                        daysAgo(h.date)
-                    }}</span>
+                <div class="flex justify-between text-sm">
+                    <span class="font-medium">{{ cap(dateLong(h.date)) }}</span
+                    ><span class="text-muted">{{ daysAgo(h.date) }}</span>
                 </div>
-                <div class="row wrapflex gap-8">
-                    <span v-for="(s, j) in h.sets" :key="j" class="chip num"
+                <div class="flex flex-wrap gap-1.5">
+                    <UBadge
+                        v-for="(s, j) in h.sets"
+                        :key="j"
+                        color="neutral"
+                        variant="subtle"
+                        class="tabular-nums"
                         >{{ j + 1 }} ·
                         {{
                             historyFor.it.load_type === 'bodyweight'
@@ -536,16 +553,16 @@ const prevTxt = (it: SessionItem, j: number) => {
                         }}{{ s.reps
                         }}{{
                             historyFor.it.measurement === 'time' ? ' s' : ''
-                        }}</span
+                        }}</UBadge
                     >
                 </div>
-                <span v-if="h.note" class="faint" style="font-size: 12.5px">{{
-                    h.note
-                }}</span>
+                <p v-if="h.note" class="text-xs text-muted">{{ h.note }}</p>
             </div>
-            <p v-if="!historyFor.list.length" class="empty">
-                Aucune performance enregistrée pour cet exercice.
-            </p>
         </div>
+        <UEmpty
+            v-if="!historyFor.list.length"
+            variant="naked"
+            title="Aucune performance enregistrée pour cet exercice."
+        />
     </Sheet>
 </template>

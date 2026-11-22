@@ -3,7 +3,6 @@
 import { useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import ExerciseImage from '@/components/ExerciseImage.vue';
-import Icon from '@/components/Icon.vue';
 import Sheet from '@/components/Sheet.vue';
 import type { Exercise } from '@/types';
 
@@ -80,36 +79,33 @@ function destroy() {
         onSuccess: () => !deleteError.value && emit('close'),
     });
 }
-const GROUPS = {
-    chest: 'Pectoraux',
-    back: 'Dos',
-    legs: 'Jambes',
-    shoulders: 'Épaules',
-    arms: 'Bras',
-    core: 'Abdominaux',
-};
+const GROUPS = [
+    { value: 'chest', label: 'Pectoraux' },
+    { value: 'back', label: 'Dos' },
+    { value: 'legs', label: 'Jambes' },
+    { value: 'shoulders', label: 'Épaules' },
+    { value: 'arms', label: 'Bras' },
+    { value: 'core', label: 'Abdominaux' },
+];
+const LOADS = [
+    { value: 'two_dumbbells', label: 'Deux haltères' },
+    { value: 'one_dumbbell', label: 'Un haltère' },
+    { value: 'bodyweight', label: 'Poids du corps' },
+];
+const MEASURES = [
+    { value: 'reps', label: 'Répétitions' },
+    { value: 'time', label: 'Durée (secondes)' },
+];
 </script>
 
 <template>
     <Sheet
-        :label="e ? 'Modifier l’exercice' : 'Nouvel exercice personnalisé'"
+        :title="e ? 'Modifier l’exercice' : 'Nouvel exercice personnalisé'"
         @close="emit('close')"
     >
-        <div class="sheet-head">
-            <h3 class="title-m grow">
-                {{ e ? 'Modifier l’exercice' : 'Nouvel exercice personnalisé' }}
-            </h3>
-            <button
-                class="btn btn-ghost btn-icon"
-                aria-label="Fermer"
-                @click="emit('close')"
-            >
-                <Icon name="x" />
-            </button>
-        </div>
-        <form class="sheet-body" @submit.prevent="save">
-            <div class="row wrapflex gap-16">
-                <div class="illo" style="width: 200px">
+        <form class="space-y-5" @submit.prevent="save">
+            <div class="flex flex-wrap items-start gap-4">
+                <div class="illo w-48">
                     <ExerciseImage
                         :exercise="{
                             name: form.name,
@@ -119,181 +115,145 @@ const GROUPS = {
                         :animated="false"
                     />
                 </div>
-                <div class="stack gap-8">
-                    <label class="btn" for="cx-img"
-                        ><Icon name="image" />{{
+                <div class="flex max-w-xs flex-col items-start gap-2">
+                    <UButton
+                        as="label"
+                        for="cx-img"
+                        icon="i-lucide-image"
+                        color="neutral"
+                        variant="outline"
+                        class="cursor-pointer"
+                        >{{
                             preview ? 'Changer l’image' : 'Importer une image'
-                        }}</label
+                        }}</UButton
                     >
                     <input
                         id="cx-img"
                         type="file"
                         accept="image/jpeg,image/png,image/webp"
-                        class="sr"
+                        class="sr-only"
                         @change="onFile"
                     />
-                    <button
+                    <UButton
                         v-if="preview"
-                        type="button"
-                        class="btn btn-ghost btn-sm"
+                        color="neutral"
+                        variant="ghost"
+                        size="sm"
                         @click="removeImage"
+                        >Retirer l’image</UButton
                     >
-                        Retirer l’image
-                    </button>
-                    <span class="hint" style="max-width: 30ch"
-                        >Photo ou schéma du mouvement (JPG, PNG, WebP, 2 Mo
-                        max). Sans image, une silhouette neutre s’affiche.</span
-                    >
-                    <span v-if="form.errors.image" class="err">{{
-                        form.errors.image
-                    }}</span>
+                    <p class="text-xs text-muted">
+                        Photo ou schéma du mouvement (JPG, PNG, WebP, 2 Mo max).
+                        Sans image, une silhouette neutre s’affiche.
+                    </p>
+                    <p v-if="form.errors.image" class="text-xs text-error">
+                        {{ form.errors.image }}
+                    </p>
                 </div>
             </div>
-            <div class="grid-2">
-                <div class="field">
-                    <label for="cx-name">Nom</label
-                    ><input
-                        id="cx-name"
-                        v-model="form.name"
-                        class="input"
-                        :class="{ 'is-error': form.errors.name }"
-                    /><span v-if="form.errors.name" class="err">{{
-                        form.errors.name
-                    }}</span>
-                </div>
-                <div class="field">
-                    <label for="cx-muscle">Muscle principal</label
-                    ><input
-                        id="cx-muscle"
+            <div class="grid gap-4 sm:grid-cols-2">
+                <UFormField label="Nom" :error="form.errors.name">
+                    <UInput v-model="form.name" class="w-full" />
+                </UFormField>
+                <UFormField
+                    label="Muscle principal"
+                    :error="form.errors.primary_muscle"
+                >
+                    <UInput
                         v-model="form.primary_muscle"
-                        class="input"
-                        :class="{ 'is-error': form.errors.primary_muscle }"
                         placeholder="ex. Épaules"
-                    /><span v-if="form.errors.primary_muscle" class="err">{{
-                        form.errors.primary_muscle
-                    }}</span>
-                </div>
-            </div>
-            <div class="grid-2">
-                <div class="field">
-                    <label for="cx-group">Groupe musculaire (filtres)</label
-                    ><select
-                        id="cx-group"
-                        v-model="form.muscle_group"
-                        class="input"
-                    >
-                        <option v-for="(l, k) in GROUPS" :key="k" :value="k">
-                            {{ l }}
-                        </option>
-                    </select>
-                </div>
-                <div class="field">
-                    <label for="cx-sec">Muscles secondaires</label
-                    ><input
-                        id="cx-sec"
-                        v-model="form.secondary_muscles"
-                        class="input"
+                        class="w-full"
                     />
-                </div>
-            </div>
-            <div class="grid-2">
-                <div class="field">
-                    <label for="cx-eq">Matériel</label
-                    ><input id="cx-eq" v-model="form.equipment" class="input" />
-                </div>
-                <div class="field">
-                    <label for="cx-load">Charge</label
-                    ><select
-                        id="cx-load"
+                </UFormField>
+                <UFormField label="Groupe musculaire (filtres)">
+                    <USelect
+                        v-model="form.muscle_group"
+                        :items="GROUPS"
+                        class="w-full"
+                    />
+                </UFormField>
+                <UFormField label="Muscles secondaires">
+                    <UInput v-model="form.secondary_muscles" class="w-full" />
+                </UFormField>
+                <UFormField label="Matériel">
+                    <UInput v-model="form.equipment" class="w-full" />
+                </UFormField>
+                <UFormField label="Charge">
+                    <USelect
                         v-model="form.load_type"
-                        class="input"
-                    >
-                        <option value="two_dumbbells">Deux haltères</option>
-                        <option value="one_dumbbell">Un haltère</option>
-                        <option value="bodyweight">Poids du corps</option>
-                    </select>
-                </div>
-            </div>
-            <div class="grid-2">
-                <div class="field">
-                    <label for="cx-mode">Mesure</label
-                    ><select
-                        id="cx-mode"
+                        :items="LOADS"
+                        class="w-full"
+                    />
+                </UFormField>
+                <UFormField label="Mesure">
+                    <USelect
                         v-model="form.measurement"
-                        class="input"
-                    >
-                        <option value="reps">Répétitions</option>
-                        <option value="time">Durée (secondes)</option>
-                    </select>
-                </div>
-                <div class="field">
-                    <label for="cx-side">Unilatéral</label
-                    ><select
-                        id="cx-side"
+                        :items="MEASURES"
+                        class="w-full"
+                    />
+                </UFormField>
+                <UFormField label="Unilatéral">
+                    <USwitch
                         v-model="form.is_unilateral"
-                        class="input"
-                    >
-                        <option :value="false">Non</option>
-                        <option :value="true">Oui, par côté</option>
-                    </select>
-                </div>
+                        label="Oui, par côté"
+                        class="pt-1.5"
+                    />
+                </UFormField>
             </div>
-            <div class="field">
-                <label for="cx-desc">Description courte</label
-                ><textarea
-                    id="cx-desc"
+            <UFormField label="Description courte">
+                <UTextarea
                     v-model="form.description"
-                    class="input"
-                    style="min-height: 56px"
-                ></textarea>
-            </div>
-            <div class="field">
-                <label for="cx-cues"
-                    >Consignes d’exécution (une par ligne)</label
-                ><textarea id="cx-cues" v-model="cues" class="input"></textarea>
-            </div>
-            <div class="field">
-                <label for="cx-mist">Erreurs fréquentes (une par ligne)</label
-                ><textarea
-                    id="cx-mist"
-                    v-model="mistakes"
-                    class="input"
-                ></textarea>
-            </div>
-            <p v-if="deleteError" class="notice warn">
-                <Icon name="warn" /><span>{{ deleteError }}</span>
-            </p>
+                    :rows="2"
+                    class="w-full"
+                />
+            </UFormField>
+            <UFormField label="Consignes d’exécution" hint="une par ligne">
+                <UTextarea v-model="cues" class="w-full" />
+            </UFormField>
+            <UFormField label="Erreurs fréquentes" hint="une par ligne">
+                <UTextarea v-model="mistakes" class="w-full" />
+            </UFormField>
+            <UAlert
+                v-if="deleteError"
+                color="warning"
+                variant="subtle"
+                icon="i-lucide-triangle-alert"
+                :title="deleteError"
+            />
         </form>
-        <div class="sheet-foot">
+        <template #footer>
             <template v-if="confirmDel">
-                <span
-                    class="muted grow"
-                    style="font-size: 13px; align-self: center"
+                <span class="mr-auto self-center text-sm text-muted"
                     >Supprimer cet exercice ?</span
                 >
-                <button class="btn" @click="confirmDel = false">Non</button
-                ><button class="btn btn-danger" @click="destroy">
-                    Supprimer
-                </button>
+                <UButton
+                    color="neutral"
+                    variant="outline"
+                    @click="confirmDel = false"
+                    >Non</UButton
+                >
+                <UButton color="error" @click="destroy">Supprimer</UButton>
             </template>
             <template v-else>
-                <button
+                <UButton
                     v-if="e"
-                    class="btn btn-danger"
-                    style="margin-right: auto"
+                    icon="i-lucide-trash-2"
+                    color="error"
+                    variant="ghost"
+                    class="mr-auto"
                     @click="confirmDel = true"
+                    >Supprimer</UButton
                 >
-                    <Icon name="trash" />Supprimer
-                </button>
-                <button class="btn" @click="emit('close')">Annuler</button>
-                <button
-                    class="btn btn-primary"
-                    :disabled="form.processing"
-                    @click="save"
+                <UButton
+                    color="neutral"
+                    variant="outline"
+                    @click="emit('close')"
+                    >Annuler</UButton
                 >
-                    Enregistrer
-                </button>
+                <UButton :loading="form.processing" @click="save"
+                    >Enregistrer</UButton
+                >
             </template>
-        </div>
+        </template>
     </Sheet>
 </template>

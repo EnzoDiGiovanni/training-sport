@@ -429,8 +429,8 @@ const FAR_BONES: [string, string][] = [
 ];
 
 function propSvg(p: any): string {
-    const g = '#3A3A41',
-        g2 = '#2C2C32';
+    const g = 'var(--ui-border-accented)',
+        g2 = 'var(--ui-border)';
     if (p.t === 'bench') {
         const legH = 90 - p.y - 4;
         return `<rect x="${p.x}" y="${p.y}" width="${p.w}" height="5" rx="2.5" fill="${g}"/>
@@ -529,11 +529,9 @@ export function illoSvg(
         !d.still;
     const dur = d.fast ? 0.7 : 2.6;
     const txt = 'var(--text)';
-    let s = `<svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${(opts.label || 'Illustration du mouvement').replace(/"/g, '&quot;')}">`;
-    // sol et grille de points
-    s += `<defs><pattern id="dots" width="8" height="8" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".6" fill="#26262B"/></pattern></defs>`;
-    s += `<rect x="0" y="0" width="160" height="100" fill="url(#dots)"/>`;
-    s += `<line x1="0" y1="90.5" x2="160" y2="90.5" stroke="#2A2A30" stroke-width="1"/>`;
+    let s = `<svg viewBox="12 3 136 89" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${(opts.label || 'Illustration du mouvement').replace(/"/g, '&quot;')}">`;
+    // sol (cadrage resserré autour de la silhouette)
+    s += `<line x1="0" y1="90.5" x2="160" y2="90.5" stroke="var(--ui-border-accented)" stroke-width="1"/>`;
     s += `<g transform="translate(0,2)">`;
     d.props.forEach((p) => (s += propSvg(p)));
     // membres éloignés

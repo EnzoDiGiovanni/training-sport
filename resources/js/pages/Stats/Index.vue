@@ -3,7 +3,6 @@ import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import Chart from '@/components/Chart.vue';
 import ExerciseImage from '@/components/ExerciseImage.vue';
-import Icon from '@/components/Icon.vue';
 import {
     cap,
     dateLong,
@@ -114,6 +113,9 @@ const records = computed<[string, number, string, number][]>(() => [
 
 // Musculation
 const exId = ref<number | null>(props.exercises[0]?.id ?? null);
+const exItems = computed(() =>
+    props.exercises.map((e) => ({ label: e.name, value: e.id })),
+);
 const ex = computed(
     () => props.exercises.find((e) => e.id === exId.value) ?? null,
 );
@@ -178,40 +180,41 @@ const signed = (v: number | null, d = 1) =>
 
 <template>
     <Head title="Progression" />
-    <div class="page-head">
-        <div class="stack gap-4">
-            <span class="eyebrow">8 dernières semaines</span>
-            <h1 class="title-xl">Progression</h1>
-        </div>
-        <div class="seg" role="group" aria-label="Catégorie">
-            <button :aria-pressed="tab === 'run'" @click="tab = 'run'">
-                Course
-            </button>
-            <button
-                :aria-pressed="tab === 'strength'"
-                @click="tab = 'strength'"
-            >
-                Musculation
-            </button>
-            <button :aria-pressed="tab === 'weight'" @click="tab = 'weight'">
-                Poids
-            </button>
-        </div>
-    </div>
+    <UPageHeader headline="8 dernières semaines" title="Progression">
+        <template #links>
+            <UTabs
+                v-model="tab"
+                :items="[
+                    {
+                        value: 'run',
+                        label: 'Course',
+                        icon: 'i-lucide-footprints',
+                    },
+                    {
+                        value: 'strength',
+                        label: 'Musculation',
+                        icon: 'i-lucide-dumbbell',
+                    },
+                    { value: 'weight', label: 'Poids', icon: 'i-lucide-scale' },
+                ]"
+                :content="false"
+                :ui="{ list: 'w-auto', trigger: 'grow-0' }"
+                aria-label="Catégorie"
+            />
+        </template>
+    </UPageHeader>
 
     <template v-if="tab === 'run'">
-        <div class="card card-pad">
+        <UCard>
             <div class="chart-head">
-                <div class="stack">
-                    <span class="label">Kilométrage hebdomadaire</span
-                    ><span class="big num"
-                        >{{ fmt(weeks.at(-2)?.km ?? 0) }} km</span
-                    >
+                <div>
+                    <p class="text-sm text-muted">Kilométrage hebdomadaire</p>
+                    <p class="big">{{ fmt(weeks.at(-2)?.km ?? 0) }} km</p>
                 </div>
-                <span class="faint" style="font-size: 12.5px; text-align: right"
-                    >semaine dernière<br />objectif
-                    {{ fmt(profile.weekly_km_goal, 0) }} km</span
-                >
+                <p class="text-right text-xs text-muted">
+                    semaine dernière<br />objectif
+                    {{ fmt(profile.weekly_km_goal, 0) }} km
+                </p>
             </div>
             <Chart
                 kind="bar"
@@ -221,43 +224,35 @@ const signed = (v: number | null, d = 1) =>
                 :goal="profile.weekly_km_goal"
                 :h="210"
             />
-        </div>
-        <div class="filters">
-            <button
-                class="fchip"
-                :aria-pressed="runW === 'all'"
-                @click="runW = 'all'"
-            >
-                Toutes les courses
-            </button>
-            <button
-                v-for="w in runWorkouts"
-                :key="w.id"
-                class="fchip"
-                :aria-pressed="runW === w.id"
-                @click="runW = w.id"
-            >
-                {{ w.name }}
-            </button>
-        </div>
-        <div v-if="runs.length" class="charts-grid">
-            <div class="card card-pad">
+        </UCard>
+        <UTabs
+            v-model="runW"
+            :items="[
+                { value: 'all', label: 'Toutes les courses' },
+                ...runWorkouts.map((w) => ({ value: w.id, label: w.name })),
+            ]"
+            :content="false"
+            :ui="{ list: 'w-auto', trigger: 'grow-0' }"
+            variant="pill"
+            size="sm"
+            class="max-w-full overflow-x-auto"
+        />
+        <div v-if="runs.length" class="grid gap-4 lg:grid-cols-2">
+            <UCard>
                 <div class="chart-head">
-                    <div class="stack">
-                        <span class="label">Vitesse moyenne</span
-                        ><span class="big num"
-                            >{{ fmt(avgPts.at(-1)!.value, 2) }} km/h</span
-                        >
+                    <div>
+                        <p class="text-sm text-muted">Vitesse moyenne</p>
+                        <p class="big">
+                            {{ fmt(avgPts.at(-1)!.value, 2) }} km/h
+                        </p>
                     </div>
-                    <span
-                        class="faint"
-                        style="font-size: 12.5px; text-align: right"
-                        ><span
-                            class="num"
+                    <p class="text-right text-xs text-muted">
+                        <span
+                            class="font-medium tabular-nums"
                             :class="
                                 avgPts.at(-1)!.value >= avgPts[0].value
-                                    ? 'delta-good'
-                                    : 'delta-bad'
+                                    ? 'text-success'
+                                    : 'text-warning'
                             "
                             >{{
                                 signed(
@@ -266,149 +261,165 @@ const signed = (v: number | null, d = 1) =>
                                 )
                             }}
                             km/h</span
-                        ><br />depuis le {{ avgPts[0].label }}</span
-                    >
+                        ><br />depuis le {{ avgPts[0].label }}
+                    </p>
                 </div>
                 <Chart kind="line" :data="avgPts" unit="km/h" :d="2" />
-            </div>
-            <div class="card card-pad">
+            </UCard>
+            <UCard>
                 <div class="chart-head">
-                    <div class="stack">
-                        <span class="label">Distance par séance</span
-                        ><span class="big num"
-                            >{{ fmt(distPts.at(-1)!.value, 2) }} km</span
-                        >
+                    <div>
+                        <p class="text-sm text-muted">Distance par séance</p>
+                        <p class="big">
+                            {{ fmt(distPts.at(-1)!.value, 2) }} km
+                        </p>
                     </div>
-                    <span
-                        class="faint"
-                        style="font-size: 12.5px; text-align: right"
-                        >{{ runs.length }} courses ·
+                    <p class="text-right text-xs text-muted">
+                        {{ runs.length }} courses ·
                         {{ fmt(distPts.reduce((a, x) => a + x.value, 0)) }} km
-                        au total</span
-                    >
+                        au total
+                    </p>
                 </div>
                 <Chart kind="line" :data="distPts" unit="km" :d="2" />
-            </div>
-            <div class="card card-pad">
+            </UCard>
+            <UCard>
                 <div class="chart-head">
-                    <div class="stack">
-                        <span class="label">Durée par séance</span
-                        ><span class="big num"
-                            >{{ fmtInt(durPts.at(-1)!.value) }} min</span
-                        >
+                    <div>
+                        <p class="text-sm text-muted">Durée par séance</p>
+                        <p class="big">
+                            {{ fmtInt(durPts.at(-1)!.value) }} min
+                        </p>
                     </div>
-                    <span
-                        class="faint"
-                        style="font-size: 12.5px; text-align: right"
-                        >dernière séance</span
-                    >
+                    <p class="text-right text-xs text-muted">dernière séance</p>
                 </div>
                 <Chart kind="line" :data="durPts" unit="min" :d="0" />
-            </div>
-            <div class="card card-pad stack gap-12">
-                <span class="label">Records</span>
-                <div
-                    v-for="[k, v, u, d] in records"
-                    :key="k"
-                    class="row"
-                    style="
-                        justify-content: space-between;
-                        padding: 8px 0;
-                        border-bottom: 1px solid var(--border);
-                    "
-                >
-                    <span class="muted">{{ k }}</span
-                    ><span class="num" style="font-weight: 500"
-                        >{{ fmt(v, d) }} {{ u }}</span
+            </UCard>
+            <UCard>
+                <template #header>
+                    <h3 class="flex items-center gap-2 font-semibold">
+                        <UIcon
+                            name="i-lucide-trophy"
+                            class="text-warning"
+                        />Records
+                    </h3>
+                </template>
+                <dl class="divide-y divide-default">
+                    <div
+                        v-for="[k, v, u, d] in records"
+                        :key="k"
+                        class="flex justify-between py-2.5 text-sm"
                     >
-                </div>
-                <p class="faint" style="font-size: 12px">
+                        <dt class="text-muted">{{ k }}</dt>
+                        <dd class="font-medium tabular-nums">
+                            {{ fmt(v, d) }} {{ u }}
+                        </dd>
+                    </div>
+                </dl>
+                <p class="mt-3 text-xs text-dimmed">
                     Les vitesses comparées entre séances différentes
                     (fondamentale, fractionné) n’ont pas le même sens : filtre
                     par séance pour suivre une progression fiable.
                 </p>
-            </div>
+            </UCard>
         </div>
-        <div v-else class="card empty">Aucune course pour ce filtre.</div>
+        <UEmpty
+            v-else
+            icon="i-lucide-footprints"
+            title="Aucune course pour ce filtre."
+        />
     </template>
 
     <template v-else-if="tab === 'strength'">
-        <div v-if="!ex" class="card empty">
-            Aucune séance de musculation enregistrée pour l’instant.
-        </div>
+        <UEmpty
+            v-if="!ex"
+            icon="i-lucide-dumbbell"
+            title="Aucune séance de musculation enregistrée pour l’instant."
+        />
         <template v-else>
-            <div class="card card-pad row wrapflex gap-16">
+            <UCard :ui="{ body: 'flex flex-wrap items-center gap-4' }">
                 <span class="thumb thumb-lg"
                     ><ExerciseImage :exercise="ex" :animated="false" pose="end"
                 /></span>
-                <div class="field grow" style="min-width: 220px">
-                    <label for="statsEx">Exercice</label
-                    ><select id="statsEx" v-model="exId" class="input">
-                        <option
-                            v-for="e in exercises"
-                            :key="e.id"
-                            :value="e.id"
-                        >
-                            {{ e.name }}
-                        </option>
-                    </select>
-                </div>
-                <div class="grid-3 grow" style="min-width: 280px">
-                    <div class="meta-item">
-                        <span class="k">{{
-                            bw ? 'Meilleure série' : 'Charge actuelle'
-                        }}</span
-                        ><span class="v num">{{
-                            bw
-                                ? best
-                                    ? best.reps + (isTime ? ' s' : '')
-                                    : '–'
-                                : fmtKg(h.at(-1)?.max_kg ?? 0) + ' kg'
-                        }}</span>
-                    </div>
-                    <div class="meta-item">
-                        <span class="k">Progression</span
-                        ><span class="v num delta-good">{{
-                            bw
-                                ? signed(
-                                      (h.at(-1)?.reps ?? 0) - (h[0]?.reps ?? 0),
-                                      0,
-                                  ) + (isTime ? ' s' : ' reps')
-                                : signed(
-                                      (h.at(-1)?.max_kg ?? 0) -
-                                          (h[0]?.max_kg ?? 0),
-                                  ) + ' kg'
-                        }}</span>
-                    </div>
-                    <div class="meta-item">
-                        <span class="k">Séances</span
-                        ><span class="v num">{{ h.length }}</span>
-                    </div>
-                </div>
-            </div>
-            <div class="charts-grid">
-                <div class="card card-pad">
-                    <div class="chart-head">
-                        <div class="stack">
-                            <span class="label">{{
+                <UFormField label="Exercice" class="min-w-56 flex-1">
+                    <USelectMenu
+                        :model-value="exId ?? undefined"
+                        @update:model-value="(v) => (exId = v)"
+                        :items="exItems"
+                        value-key="value"
+                        class="w-full"
+                    />
+                </UFormField>
+                <dl class="grid min-w-72 flex-1 grid-cols-3 gap-3">
+                    <div>
+                        <dt class="text-xs text-muted">
+                            {{ bw ? 'Meilleure série' : 'Charge actuelle' }}
+                        </dt>
+                        <dd class="text-lg font-semibold tabular-nums">
+                            {{
                                 bw
-                                    ? isTime
-                                        ? 'Meilleur maintien'
-                                        : 'Meilleure série'
-                                    : 'Charge max par séance'
-                            }}</span
-                            ><span class="big num">{{
-                                bw
-                                    ? (mainPts.at(-1)?.value ?? 0) +
-                                      (isTime ? ' s' : ' reps')
+                                    ? best
+                                        ? best.reps + (isTime ? ' s' : '')
+                                        : '–'
                                     : fmtKg(h.at(-1)?.max_kg ?? 0) + ' kg'
-                            }}</span>
+                            }}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs text-muted">Progression</dt>
+                        <dd
+                            class="text-lg font-semibold text-success tabular-nums"
+                        >
+                            {{
+                                bw
+                                    ? signed(
+                                          (h.at(-1)?.reps ?? 0) -
+                                              (h[0]?.reps ?? 0),
+                                          0,
+                                      ) + (isTime ? ' s' : ' reps')
+                                    : signed(
+                                          (h.at(-1)?.max_kg ?? 0) -
+                                              (h[0]?.max_kg ?? 0),
+                                      ) + ' kg'
+                            }}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs text-muted">Séances</dt>
+                        <dd class="text-lg font-semibold tabular-nums">
+                            {{ h.length }}
+                        </dd>
+                    </div>
+                </dl>
+            </UCard>
+            <div class="grid gap-4 lg:grid-cols-2">
+                <UCard>
+                    <div class="chart-head">
+                        <div>
+                            <p class="text-sm text-muted">
+                                {{
+                                    bw
+                                        ? isTime
+                                            ? 'Meilleur maintien'
+                                            : 'Meilleure série'
+                                        : 'Charge max par séance'
+                                }}
+                            </p>
+                            <p class="big">
+                                {{
+                                    bw
+                                        ? (mainPts.at(-1)?.value ?? 0) +
+                                          (isTime ? ' s' : ' reps')
+                                        : fmtKg(h.at(-1)?.max_kg ?? 0) + ' kg'
+                                }}
+                            </p>
                         </div>
-                        <span class="faint" style="font-size: 12.5px">{{
-                            ex.load_type === 'two_dumbbells'
-                                ? 'par haltère'
-                                : ''
-                        }}</span>
+                        <p class="text-xs text-muted">
+                            {{
+                                ex.load_type === 'two_dumbbells'
+                                    ? 'par haltère'
+                                    : ''
+                            }}
+                        </p>
                     </div>
                     <Chart
                         kind="line"
@@ -417,23 +428,23 @@ const signed = (v: number | null, d = 1) =>
                         :d="bw ? 0 : 1"
                         step
                     />
-                </div>
-                <div class="card card-pad">
+                </UCard>
+                <UCard>
                     <div class="chart-head">
-                        <div class="stack">
-                            <span class="label">{{
-                                isTime
-                                    ? 'Temps total de maintien'
-                                    : 'Répétitions totales'
-                            }}</span
-                            ><span class="big num"
-                                >{{ h.at(-1)?.reps ?? 0
-                                }}{{ isTime ? ' s' : '' }}</span
-                            >
+                        <div>
+                            <p class="text-sm text-muted">
+                                {{
+                                    isTime
+                                        ? 'Temps total de maintien'
+                                        : 'Répétitions totales'
+                                }}
+                            </p>
+                            <p class="big">
+                                {{ h.at(-1)?.reps ?? 0
+                                }}{{ isTime ? ' s' : '' }}
+                            </p>
                         </div>
-                        <span class="faint" style="font-size: 12.5px"
-                            >par séance</span
-                        >
+                        <p class="text-xs text-muted">par séance</p>
                     </div>
                     <Chart
                         kind="bar"
@@ -446,18 +457,18 @@ const signed = (v: number | null, d = 1) =>
                         :unit="isTime ? 's' : 'reps'"
                         :d="0"
                     />
-                </div>
-                <div v-if="!bw" class="card card-pad">
+                </UCard>
+                <UCard v-if="!bw">
                     <div class="chart-head">
-                        <div class="stack">
-                            <span class="label">Volume par séance</span
-                            ><span class="big num"
-                                >{{ fmtInt(h.at(-1)?.volume ?? 0) }} kg</span
-                            >
+                        <div>
+                            <p class="text-sm text-muted">Volume par séance</p>
+                            <p class="big">
+                                {{ fmtInt(h.at(-1)?.volume ?? 0) }} kg
+                            </p>
                         </div>
-                        <span class="faint" style="font-size: 12.5px"
-                            >charge × reps × haltères</span
-                        >
+                        <p class="text-xs text-muted">
+                            charge × reps × haltères
+                        </p>
                     </div>
                     <Chart
                         kind="line"
@@ -470,18 +481,18 @@ const signed = (v: number | null, d = 1) =>
                         unit="kg"
                         :d="0"
                     />
-                </div>
-                <div class="card card-pad">
+                </UCard>
+                <UCard>
                     <div class="chart-head">
-                        <div class="stack">
-                            <span class="label">Séances de musculation</span
-                            ><span class="big num"
-                                >{{ weeks.at(-2)?.strength ?? 0 }} / sem.</span
-                            >
+                        <div>
+                            <p class="text-sm text-muted">
+                                Séances de musculation
+                            </p>
+                            <p class="big">
+                                {{ weeks.at(-2)?.strength ?? 0 }} / sem.
+                            </p>
                         </div>
-                        <span class="faint" style="font-size: 12.5px"
-                            >semaine dernière</span
-                        >
+                        <p class="text-xs text-muted">semaine dernière</p>
                     </div>
                     <Chart
                         kind="bar"
@@ -490,119 +501,109 @@ const signed = (v: number | null, d = 1) =>
                         :d="0"
                         :goal="strengthGoal || null"
                     />
-                </div>
+                </UCard>
             </div>
-            <section class="section">
-                <div class="section-head">
-                    <h2>Historique de l’exercice</h2>
-                </div>
-                <div class="card">
+            <section class="space-y-3">
+                <h2 class="text-lg font-semibold">Historique de l’exercice</h2>
+                <UCard :ui="{ body: 'p-0 sm:p-0 divide-y divide-default' }">
                     <div
                         v-for="x in h.slice().reverse().slice(0, 8)"
                         :key="x.session_id"
-                        class="h-row"
-                        style="grid-template-columns: 90px 1fr auto"
+                        class="grid grid-cols-[90px_1fr_auto] gap-3 px-4 py-3 text-sm tabular-nums"
                     >
-                        <span class="muted num" style="font-size: 13px">{{
-                            dateShort(x.date)
-                        }}</span
-                        ><span class="num">{{ summary(x) }}</span
-                        ><span class="faint num" style="font-size: 13px">{{
+                        <span class="text-muted">{{ dateShort(x.date) }}</span
+                        ><span>{{ summary(x) }}</span
+                        ><span class="text-muted">{{
                             bw ? '' : fmtInt(x.volume) + ' kg'
                         }}</span>
                     </div>
-                </div>
+                </UCard>
             </section>
         </template>
     </template>
 
     <template v-else>
-        <div v-if="weight.too_fast" class="notice warn">
-            <Icon name="warn" /><span
-                >Tu perds plus de 0,75 kg par semaine en moyenne. En
-                recomposition, une perte trop rapide augmente le risque de
-                perdre du muscle : vise un rythme plus progressif.</span
-            >
-        </div>
-        <div class="grid-4">
-            <div class="card stat">
-                <span class="k">Poids actuel</span
-                ><span class="v num" style="font-size: 22px">{{
-                    weight.last ? fmt(weight.last.kg) + ' kg' : '–'
-                }}</span
-                ><span class="d">{{
-                    weight.last
-                        ? cap(dateLong(weight.last.date))
-                        : 'Aucune pesée'
-                }}</span>
-            </div>
-            <div class="card stat">
-                <span class="k">Sur 30 jours</span
-                ><span
-                    class="v num"
-                    :class="{ 'delta-good': (weight.delta30 ?? 0) <= 0 }"
-                    style="font-size: 22px"
-                    >{{ signed(weight.delta30) }} kg</span
-                ><span class="d"
-                    >moyenne mobile : {{ signed(weight.ma_delta30) }} kg</span
+        <UAlert
+            v-if="weight.too_fast"
+            color="warning"
+            variant="subtle"
+            icon="i-lucide-triangle-alert"
+            description="Tu perds plus de 0,75 kg par semaine en moyenne. En recomposition, une perte trop rapide augmente le risque de perdre du muscle : vise un rythme plus progressif."
+        />
+        <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <UCard :ui="{ body: 'space-y-1' }">
+                <p class="text-sm text-muted">Poids actuel</p>
+                <p class="text-2xl font-semibold tabular-nums">
+                    {{ weight.last ? fmt(weight.last.kg) + ' kg' : '–' }}
+                </p>
+                <p class="text-xs text-muted">
+                    {{
+                        weight.last
+                            ? cap(dateLong(weight.last.date))
+                            : 'Aucune pesée'
+                    }}
+                </p>
+            </UCard>
+            <UCard :ui="{ body: 'space-y-1' }">
+                <p class="text-sm text-muted">Sur 30 jours</p>
+                <p
+                    class="text-2xl font-semibold tabular-nums"
+                    :class="{ 'text-success': (weight.delta30 ?? 0) <= 0 }"
                 >
-            </div>
-            <div class="card stat">
-                <span class="k">Rythme moyen</span
-                ><span class="v num" style="font-size: 22px"
-                    >{{ fmt(weight.rate, 2) }} kg / sem.</span
-                ><span class="d">{{
-                    weight.rate == null
-                        ? '–'
-                        : weight.rate < 0 && weight.rate > -0.75
-                          ? 'rythme progressif, compatible recompo'
-                          : weight.rate <= -0.75
-                            ? 'rapide : risque de perte musculaire'
-                            : 'stable ou en hausse'
-                }}</span>
-            </div>
-            <div class="card stat">
-                <span class="k">Objectif</span
-                ><span class="v num" style="font-size: 22px"
-                    >{{ fmt(profile.target_weight_kg) }} kg</span
-                ><span class="d">{{
-                    left == null
-                        ? '–'
-                        : left > 0
-                          ? 'encore ' + fmt(left) + ' kg'
-                          : 'objectif atteint'
-                }}</span>
-            </div>
-        </div>
-        <div class="card card-pad">
-            <div class="chart-head">
-                <div class="stack">
-                    <span class="label">Historique du poids</span
-                    ><span class="faint" style="font-size: 12.5px"
-                        ><span
-                            style="
-                                display: inline-block;
-                                width: 10px;
-                                height: 2px;
-                                background: var(--accent);
-                                vertical-align: middle;
-                                margin-right: 6px;
-                            "
-                        ></span
-                        >moyenne mobile 7 jours
-                        <span
-                            style="
-                                display: inline-block;
-                                width: 6px;
-                                height: 6px;
-                                border-radius: 50%;
-                                background: var(--muted);
-                                vertical-align: middle;
-                                margin: 0 6px 0 14px;
-                            "
-                        ></span
-                        >pesées</span
+                    {{ signed(weight.delta30) }} kg
+                </p>
+                <p class="text-xs text-muted">
+                    moyenne mobile : {{ signed(weight.ma_delta30) }} kg
+                </p>
+            </UCard>
+            <UCard :ui="{ body: 'space-y-1' }">
+                <p class="text-sm text-muted">Rythme moyen</p>
+                <p class="text-2xl font-semibold tabular-nums">
+                    {{ fmt(weight.rate, 2) }}
+                    <span class="text-sm font-normal text-muted"
+                        >kg / sem.</span
                     >
+                </p>
+                <p class="text-xs text-muted">
+                    {{
+                        weight.rate == null
+                            ? '–'
+                            : weight.rate < 0 && weight.rate > -0.75
+                              ? 'rythme progressif, compatible recompo'
+                              : weight.rate <= -0.75
+                                ? 'rapide : risque de perte musculaire'
+                                : 'stable ou en hausse'
+                    }}
+                </p>
+            </UCard>
+            <UCard :ui="{ body: 'space-y-1' }">
+                <p class="text-sm text-muted">Objectif</p>
+                <p class="text-2xl font-semibold tabular-nums">
+                    {{ fmt(profile.target_weight_kg) }} kg
+                </p>
+                <p class="text-xs text-muted">
+                    {{
+                        left == null
+                            ? '–'
+                            : left > 0
+                              ? 'encore ' + fmt(left) + ' kg'
+                              : 'objectif atteint'
+                    }}
+                </p>
+            </UCard>
+        </div>
+        <UCard>
+            <div class="chart-head">
+                <div>
+                    <p class="text-sm font-semibold">Historique du poids</p>
+                    <p class="flex items-center gap-1.5 text-xs text-muted">
+                        <span class="inline-block h-0.5 w-3 bg-primary"></span>
+                        moyenne mobile 7 jours
+                        <span
+                            class="ml-3 inline-block size-1.5 rounded-full bg-(--ui-text-muted)"
+                        ></span>
+                        pesées
+                    </p>
                 </div>
             </div>
             <Chart
@@ -619,89 +620,98 @@ const signed = (v: number | null, d = 1) =>
                 :h="240"
                 :goal="profile.target_weight_kg"
             />
-            <p class="faint" style="font-size: 12px; margin-top: 10px">
+            <p class="mt-3 text-xs text-dimmed">
                 Le poids varie naturellement de 0,5 à 1 kg d’un jour à l’autre
                 (eau, sel, digestion). Fie-toi à la moyenne mobile. En
                 recomposition, le poids peut stagner alors que la masse grasse
                 baisse : le tour de taille serait un bon indicateur
                 complémentaire.
             </p>
-        </div>
-        <div class="grid-2" style="align-items: start">
-            <form
-                class="card card-pad stack gap-12"
-                @submit.prevent="addWeight"
-            >
-                <h2 class="title-m">Nouvelle pesée</h2>
-                <div class="grid-2">
-                    <div class="field">
-                        <label for="wDate">Date</label
-                        ><input
-                            id="wDate"
-                            v-model="wForm.measured_on"
-                            type="date"
-                            class="input"
-                            :max="today"
-                        /><span v-if="wForm.errors.measured_on" class="err">{{
-                            wForm.errors.measured_on
-                        }}</span>
-                    </div>
-                    <div class="field">
-                        <label for="wKg">Poids</label>
-                        <div class="input-unit">
-                            <input
-                                id="wKg"
+        </UCard>
+        <div class="grid items-start gap-4 lg:grid-cols-2">
+            <UCard>
+                <template #header>
+                    <h2 class="font-semibold">Nouvelle pesée</h2>
+                </template>
+                <form class="space-y-4" @submit.prevent="addWeight">
+                    <div class="grid grid-cols-2 gap-4">
+                        <UFormField
+                            label="Date"
+                            :error="wForm.errors.measured_on"
+                        >
+                            <UInput
+                                v-model="wForm.measured_on"
+                                type="date"
+                                :max="today"
+                                class="w-full"
+                            />
+                        </UFormField>
+                        <UFormField
+                            label="Poids"
+                            :error="wForm.errors.weight_kg"
+                        >
+                            <UInput
                                 v-model="wForm.weight_kg"
-                                class="input num"
-                                :class="{ 'is-error': wForm.errors.weight_kg }"
                                 inputmode="decimal"
                                 :placeholder="
                                     weight.last ? fmt(weight.last.kg) : ''
                                 "
-                            /><span>kg</span>
-                        </div>
-                        <span v-if="wForm.errors.weight_kg" class="err">{{
-                            wForm.errors.weight_kg
-                        }}</span>
+                                class="w-full tabular-nums"
+                            >
+                                <template #trailing
+                                    ><span class="text-xs text-muted"
+                                        >kg</span
+                                    ></template
+                                >
+                            </UInput>
+                        </UFormField>
                     </div>
-                </div>
-                <button class="btn btn-primary" :disabled="wForm.processing">
-                    <Icon name="plus" />Enregistrer la pesée
-                </button>
-                <p class="faint" style="font-size: 12px">
-                    Conseil : pèse-toi le matin, à jeun, après être passé aux
-                    toilettes, 2 à 3 fois par semaine. Une nouvelle pesée le
-                    même jour remplace la précédente.
-                </p>
-            </form>
-            <div class="card">
-                <div style="padding: 14px 18px 6px" class="label">
-                    Dernières pesées
-                </div>
+                    <UButton
+                        type="submit"
+                        icon="i-lucide-plus"
+                        :loading="wForm.processing"
+                        >Enregistrer la pesée</UButton
+                    >
+                    <p class="text-xs text-dimmed">
+                        Conseil : pèse-toi le matin, à jeun, après être passé
+                        aux toilettes, 2 à 3 fois par semaine. Une nouvelle
+                        pesée le même jour remplace la précédente.
+                    </p>
+                </form>
+            </UCard>
+            <UCard :ui="{ body: 'p-0 sm:p-0 divide-y divide-default' }">
+                <template #header>
+                    <h2 class="font-semibold">Dernières pesées</h2>
+                </template>
                 <div
                     v-for="x in wl.slice().reverse().slice(0, 6)"
                     :key="x.id"
-                    class="row"
-                    style="
-                        padding: 10px 18px;
-                        border-top: 1px solid var(--border);
-                    "
+                    class="flex items-center gap-3 px-4 py-2"
                 >
-                    <span class="muted grow">{{ cap(dateLong(x.date)) }}</span
-                    ><span class="num">{{ fmt(x.kg) }} kg</span>
-                    <button
-                        class="btn btn-ghost btn-icon"
+                    <span class="flex-1 text-sm text-muted">{{
+                        cap(dateLong(x.date))
+                    }}</span
+                    ><span class="text-sm tabular-nums"
+                        >{{ fmt(x.kg) }} kg</span
+                    >
+                    <UButton
+                        icon="i-lucide-trash-2"
+                        color="neutral"
+                        variant="ghost"
+                        size="sm"
                         :aria-label="
                             'Supprimer la pesée du ' + dateShort(x.date)
                         "
                         :disabled="wl.length <= 1"
                         @click="delWeight(x.id)"
-                    >
-                        <Icon name="trash" />
-                    </button>
+                    />
                 </div>
-                <p v-if="!wl.length" class="empty">Aucune pesée.</p>
-            </div>
+                <UEmpty
+                    v-if="!wl.length"
+                    variant="naked"
+                    title="Aucune pesée."
+                />
+            </UCard>
         </div>
     </template>
 </template>

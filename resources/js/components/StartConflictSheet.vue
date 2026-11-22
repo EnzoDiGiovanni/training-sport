@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link, usePage } from '@inertiajs/vue3';
+import { usePage } from '@inertiajs/vue3';
 import Sheet from '@/components/Sheet.vue';
 import type { Workout } from '@/types';
 
@@ -9,23 +9,16 @@ const page = usePage();
 </script>
 
 <template>
-    <Sheet label="Une séance est déjà en cours" @close="$emit('close')">
-        <div class="sheet-head">
-            <h3 class="title-m grow">Une séance est déjà en cours</h3>
-        </div>
-        <div class="sheet-body">
-            <p class="muted">
-                « {{ page.props.live?.name }} » n’est pas terminée. Tu peux la
-                reprendre ou l’abandonner pour commencer « {{ workout.name }} ».
-            </p>
-        </div>
-        <div class="sheet-foot">
-            <button class="btn btn-danger" @click="$emit('abandon')">
+    <Sheet title="Une séance est déjà en cours" @close="$emit('close')">
+        <p class="text-muted">
+            « {{ page.props.live?.name }} » n’est pas terminée. Tu peux la
+            reprendre ou l’abandonner pour commencer « {{ workout.name }} ».
+        </p>
+        <template #footer>
+            <UButton color="error" variant="soft" @click="$emit('abandon')">
                 Abandonner et commencer
-            </button>
-            <Link href="/seance-en-cours" class="btn btn-primary"
-                >Reprendre</Link
-            >
-        </div>
+            </UButton>
+            <UButton to="/seance-en-cours">Reprendre</UButton>
+        </template>
     </Sheet>
 </template>

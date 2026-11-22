@@ -1,10 +1,10 @@
-import { ref } from 'vue';
-
-export const toastMsg = ref<string | null>(null);
-let t: ReturnType<typeof setTimeout> | undefined;
+import { useToast } from '@nuxt/ui/composables';
 
 export function toast(msg: string) {
-    toastMsg.value = msg;
-    clearTimeout(t);
-    t = setTimeout(() => (toastMsg.value = null), 2600);
+    useToast().add({
+        title: msg,
+        icon: 'i-lucide-circle-check',
+        color: 'success',
+        duration: 2600,
+    });
 }

@@ -15,16 +15,18 @@ const vMax = computed(() =>
 </script>
 
 <template>
-    <div class="stack gap-4">
-        <div style="position: relative">
-            <div class="tl">
+    <div class="flex flex-col gap-1.5">
+        <div class="relative">
+            <div class="flex h-14 items-end gap-0.5">
                 <div
                     v-for="(s, i) in steps"
                     :key="i"
+                    class="flex h-full items-end"
                     :style="{ flex: s.duration_min + ' 0 0' }"
                     :title="`${s.label} · ${s.duration_min} min · ${speedLabel(s)}`"
                 >
                     <i
+                        class="block w-full rounded-sm"
                         :style="{
                             height:
                                 Math.max(18, (s.speed_max_kmh / vMax) * 100) +
@@ -47,7 +49,7 @@ const vMax = computed(() =>
                 }"
             ></span>
         </div>
-        <div class="tl-legend">
+        <div class="flex justify-between text-[11px] text-dimmed tabular-nums">
             <span>0</span><span>{{ Math.round(total / 2) }} min</span
             ><span>{{ total }} min</span>
         </div>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import ExerciseIllustration from '@/components/ExerciseIllustration.vue';
 import ExerciseImage from '@/components/ExerciseImage.vue';
@@ -129,6 +129,21 @@ const { start, conflict, abandonAndStart } = useStartWorkout();
 const shownEx = ref<Exercise | null>(null);
 const openSession = ref<Session | null>(null);
 const recovery = ref(false);
+// Prochaine séance après le jour affiché (la semaine type se répète chaque semaine).
+const nextUp = computed(() => {
+    for (let k = 1; k <= 7; k++) {
+        const i = (sel.value + k) % 7;
+        const nw = props.workouts.find(
+            (x) => x.id === props.week[i].workout_id,
+        );
+        if (nw)
+            return {
+                w: nw,
+                when: isToday.value && k === 1 ? 'Demain' : DAY_NAMES[i],
+            };
+    }
+    return null;
+});
 const doneSession = computed(
     () => props.weekSessions.find((s) => s.id === day.value.session_id) ?? null,
 );
@@ -139,127 +154,157 @@ function openDone() {
 
 <template>
     <Head title="Accueil" />
-    <div class="page-head">
-        <div class="stack gap-4">
-            <span class="eyebrow"
-                >{{ cap(dateLong(todayDate)) }} {{ todayDate.getFullYear() }} ·
-                semaine {{ weekNumber(todayDate) }}</span
-            >
-            <h1 class="title-xl">Bonjour {{ profile.name }}</h1>
-        </div>
-    </div>
+    <UPageHeader
+        :headline="`${cap(dateLong(todayDate))} ${todayDate.getFullYear()} · semaine ${weekNumber(todayDate)}`"
+        :title="`Bonjour ${profile.name}`"
+    />
 
     <!-- Carte du jour -->
-    <div v-if="!w" class="card hero" style="grid-template-columns: 1fr">
-        <div
-            class="hero-main"
-            style="
-                flex-direction: row;
-                align-items: center;
-                gap: 24px;
-                flex-wrap: wrap;
-            "
-        >
-            <div style="width: 150px; flex: none" class="illo">
-                <ExerciseIllustration
-                    illustration-key="walk"
-                    label="Récupération"
-                />
-            </div>
-            <div class="stack grow gap-8">
-                <div class="row gap-8">
-                    <span class="eyebrow">{{ dayLabel }}</span
-                    ><TypeChip type="rest" />
-                </div>
-                <h2 class="title-l">Journée de récupération</h2>
-                <p class="muted" style="max-width: 52ch">
+    <UCard v-if="!w" :ui="{ body: 'space-y-4' }">
+        <div class="flex items-start gap-4">
+            <span
+                class="grid size-11 flex-none place-items-center rounded-full bg-elevated text-muted"
+                ><UIcon name="i-lucide-moon" class="size-5"
+            /></span>
+            <div class="flex flex-1 flex-col gap-1">
+                <span class="text-sm font-medium text-muted">{{
+                    dayLabel
+                }}</span>
+                <h2 class="text-xl font-semibold">Journée de récupération</h2>
+                <p class="max-w-prose text-muted">
                     Profite-en pour recharger les batteries. Le repos fait
                     partie du programme : c’est pendant la récupération que le
                     muscle se construit.
                 </p>
             </div>
         </div>
-    </div>
-    <div v-else class="card hero">
-        <div class="hero-main">
-            <div class="row wrapflex gap-8">
-                <span class="eyebrow">{{ dayLabel }}</span
+        <div
+            v-if="nextUp"
+            class="flex flex-wrap items-center gap-3 rounded-lg bg-elevated/60 p-4"
+        >
+            <div class="flex min-w-0 flex-1 flex-col gap-1">
+                <span class="text-xs text-muted"
+                    >Prochaine séance · {{ nextUp.when }}</span
+                >
+                <span class="flex flex-wrap items-center gap-2 font-semibold"
+                    >{{ nextUp.w.name }}<TypeChip :type="nextUp.w.type"
+                /></span>
+                <span class="text-sm text-muted tabular-nums">{{
+                    durationLabel(nextUp.w)
+                }}</span>
+            </div>
+            <UButton
+                :to="`/seances/${nextUp.w.id}`"
+                color="neutral"
+                variant="outline"
+                trailing-icon="i-lucide-chevron-right"
+                >Voir le détail</UButton
+            >
+        </div>
+    </UCard>
+    <UCard
+        v-else
+        :ui="{
+            body: 'p-0 sm:p-0 grid lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] divide-y lg:divide-y-0 lg:divide-x divide-default',
+        }"
+    >
+        <div class="flex flex-col gap-5 p-5 sm:p-6">
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="text-sm font-medium text-muted">{{
+                    dayLabel
+                }}</span
                 ><TypeChip :type="w.type" />
             </div>
-            <div class="stack gap-8">
-                <h2 class="title-xl">{{ w.name }}</h2>
-                <p class="muted" style="max-width: 48ch">{{ w.objective }}</p>
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold text-highlighted">
+                    {{ w.name }}
+                </h2>
+                <p class="max-w-prose text-muted">{{ w.objective }}</p>
             </div>
-            <div class="hero-meta">
-                <div class="meta-item">
-                    <span class="k">Durée estimée</span
-                    ><span class="v num">{{ durationLabel(w) }}</span>
+            <dl class="flex flex-wrap gap-x-8 gap-y-3">
+                <div>
+                    <dt class="text-xs text-muted">Durée estimée</dt>
+                    <dd class="font-semibold tabular-nums">
+                        {{ durationLabel(w) }}
+                    </dd>
                 </div>
-                <div class="meta-item">
-                    <span class="k">Type</span
-                    ><span class="v">{{ TYPE_LABEL[w.type] }}</span>
+                <div>
+                    <dt class="text-xs text-muted">Type</dt>
+                    <dd class="font-semibold">{{ TYPE_LABEL[w.type] }}</dd>
                 </div>
-                <div v-if="w.type === 'run'" class="meta-item">
-                    <span class="k">Distance estimée</span
-                    ><span class="v num"
-                        >≈ {{ fmt(estRunKm(w.segments)) }} km</span
-                    >
+                <div v-if="w.type === 'run'">
+                    <dt class="text-xs text-muted">Distance estimée</dt>
+                    <dd class="font-semibold tabular-nums">
+                        ≈ {{ fmt(estRunKm(w.segments)) }} km
+                    </dd>
                 </div>
-                <div v-if="w.type === 'strength'" class="meta-item">
-                    <span class="k">Exercices</span
-                    ><span class="v num"
-                        >{{ w.exercises.length }} ·
-                        {{ totalSets(w.exercises) }} séries</span
-                    >
+                <div v-if="w.type === 'strength'">
+                    <dt class="text-xs text-muted">Exercices</dt>
+                    <dd class="font-semibold tabular-nums">
+                        {{ w.exercises.length }} ·
+                        {{ totalSets(w.exercises) }} séries
+                    </dd>
                 </div>
-            </div>
-            <div v-if="w.type === 'run'" class="illo" style="max-width: 300px">
+            </dl>
+            <div v-if="w.type === 'run'" class="illo max-w-xs">
                 <ExerciseIllustration
                     illustration-key="run"
                     label="Course sur tapis"
                 />
             </div>
-            <div class="row wrapflex" style="margin-top: auto">
-                <button
+            <div class="mt-auto flex flex-wrap gap-2">
+                <UButton
                     v-if="day.session_id"
-                    class="btn btn-lg"
+                    size="lg"
+                    color="neutral"
+                    variant="outline"
+                    icon="i-lucide-check"
                     @click="openDone"
+                    >Séance terminée · voir le détail</UButton
                 >
-                    <Icon name="check" />Séance terminée · voir le détail
-                </button>
-                <button
+                <UButton
                     v-else-if="w.type === 'recovery'"
-                    class="btn btn-primary btn-lg"
+                    size="lg"
+                    icon="i-lucide-plus"
                     @click="recovery = true"
+                    >Enregistrer une activité</UButton
                 >
-                    <Icon name="plus" />Enregistrer une activité
-                </button>
-                <button v-else class="btn btn-primary btn-lg" @click="start(w)">
-                    <Icon name="play" />{{
+                <UButton
+                    v-else
+                    size="lg"
+                    icon="i-lucide-play"
+                    @click="start(w)"
+                    >{{
                         isToday
                             ? 'Commencer ma séance'
                             : 'Commencer cette séance'
-                    }}
-                </button>
-                <Link
+                    }}</UButton
+                >
+                <UButton
                     v-if="!day.session_id && w.type !== 'recovery'"
-                    :href="`/seances/${w.id}`"
-                    class="btn btn-lg btn-ghost"
-                    >Voir le détail</Link
+                    :to="`/seances/${w.id}`"
+                    size="lg"
+                    color="neutral"
+                    variant="ghost"
+                    >Voir le détail</UButton
                 >
             </div>
         </div>
-        <div class="hero-side">
+        <div class="flex flex-col gap-4 bg-elevated/40 p-5 sm:p-6">
             <template v-if="w.type === 'strength'">
-                <div class="row" style="justify-content: space-between">
-                    <span class="label">Au programme</span
-                    ><Link :href="`/seances/${w.id}`" class="link">Détail</Link>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-semibold">Au programme</span
+                    ><ULink
+                        :to="`/seances/${w.id}`"
+                        class="text-sm text-primary"
+                        >Détail</ULink
+                    >
                 </div>
-                <div class="stack">
+                <div class="-mx-2 flex flex-col">
                     <button
                         v-for="we in w.exercises"
                         :key="we.exercise_id"
-                        class="ex-row"
+                        class="flex items-center gap-3 rounded-md p-2 text-left transition-colors hover:bg-elevated"
                         @click="shownEx = ex(we.exercise_id) ?? null"
                     >
                         <span class="thumb"
@@ -268,11 +313,11 @@ function openDone() {
                                 :animated="false"
                                 pose="end"
                         /></span>
-                        <span class="stack grow"
-                            ><span class="nm">{{
+                        <span class="flex min-w-0 flex-1 flex-col"
+                            ><span class="truncate text-sm font-medium">{{
                                 ex(we.exercise_id)?.name
                             }}</span
-                            ><span class="sub num"
+                            ><span class="text-xs text-muted tabular-nums"
                                 >{{ we.sets }} ×
                                 {{
                                     repsLabel(
@@ -294,36 +339,39 @@ function openDone() {
                 </div>
             </template>
             <template v-else-if="w.type === 'run'">
-                <div class="row" style="justify-content: space-between">
-                    <span class="label">Déroulé</span
-                    ><Link :href="`/seances/${w.id}`" class="link">Détail</Link>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-semibold">Déroulé</span
+                    ><ULink
+                        :to="`/seances/${w.id}`"
+                        class="text-sm text-primary"
+                        >Détail</ULink
+                    >
                 </div>
                 <RunTimeline :segments="w.segments" />
-                <div class="seg-list">
+                <div class="flex flex-col divide-y divide-default">
                     <template v-for="(s, i) in w.segments" :key="i">
-                        <div v-if="s.kind === 'repeat'" class="seg-item">
+                        <div
+                            v-if="s.kind === 'repeat'"
+                            class="flex items-center gap-3 py-2.5 text-sm"
+                        >
                             <span
-                                class="sw"
+                                class="h-8 w-1 flex-none rounded-full"
                                 style="background: var(--accent)"
                             ></span
-                            ><span class="grow"
-                                ><b style="font-weight: 500"
+                            ><span class="flex-1"
+                                ><b class="font-medium"
                                     >{{ s.repeat_count }} cycles</b
-                                ><br /><span
-                                    class="faint"
-                                    style="font-size: 12.5px"
-                                    >{{
-                                        s.children
-                                            .map(
-                                                (x) =>
-                                                    x.duration_min +
-                                                    ' min à ' +
-                                                    speedLabel(x),
-                                            )
-                                            .join(' + ')
-                                    }}</span
-                                ></span
-                            ><span class="t"
+                                ><br /><span class="text-xs text-muted">{{
+                                    s.children
+                                        .map(
+                                            (x) =>
+                                                x.duration_min +
+                                                ' min à ' +
+                                                speedLabel(x),
+                                        )
+                                        .join(' + ')
+                                }}</span></span
+                            ><span class="text-muted tabular-nums"
                                 >{{
                                     s.repeat_count *
                                     s.children.reduce(
@@ -334,16 +382,18 @@ function openDone() {
                                 min</span
                             >
                         </div>
-                        <div v-else class="seg-item">
+                        <div
+                            v-else
+                            class="flex items-center gap-3 py-2.5 text-sm"
+                        >
                             <span
-                                class="sw"
+                                class="h-8 w-1 flex-none rounded-full"
                                 :style="{ background: KIND_COLOR[s.kind] }"
                             ></span
-                            ><span class="grow"
-                                ><b style="font-weight: 500">{{ s.label }}</b
+                            ><span class="flex-1"
+                                ><b class="font-medium">{{ s.label }}</b
                                 ><br /><span
-                                    class="faint num"
-                                    style="font-size: 12.5px"
+                                    class="text-xs text-muted tabular-nums"
                                     >{{ speedLabel(s)
                                     }}{{
                                         s.incline_pct
@@ -353,7 +403,9 @@ function openDone() {
                                             : ''
                                     }}</span
                                 ></span
-                            ><span class="t">{{ s.duration_min }} min</span>
+                            ><span class="text-muted tabular-nums"
+                                >{{ s.duration_min }} min</span
+                            >
                         </div>
                     </template>
                 </div>
@@ -365,111 +417,136 @@ function openDone() {
                         label="Marche"
                     />
                 </div>
-                <p class="muted" style="font-size: 13.5px">
+                <p class="text-sm text-muted">
                     Marche tranquille, mobilité ou étirements légers. Aucune
                     séance obligatoire.
                 </p>
             </template>
         </div>
-    </div>
+    </UCard>
 
-    <section class="section">
-        <div class="section-head">
-            <h2>Cette semaine</h2>
-            <span class="faint num" style="font-size: 13px"
+    <section class="space-y-3">
+        <div class="flex items-baseline justify-between">
+            <h2 class="text-lg font-semibold">Cette semaine</h2>
+            <span class="text-sm text-muted tabular-nums"
                 >{{ stats.week.count }} / {{ planned }} séances réalisées</span
             >
         </div>
-        <div class="week">
+        <div class="grid grid-cols-7 gap-1.5 sm:gap-2">
             <button
                 v-for="(d, i) in week"
                 :key="d.date"
-                class="day"
-                :class="['is-' + d.status, { 'is-today': i === todayIdx }]"
+                class="flex flex-col items-center gap-1.5 rounded-lg border px-1 py-2.5 text-center transition-colors"
+                :class="
+                    i === sel
+                        ? 'border-primary bg-primary/5'
+                        : 'border-default hover:bg-elevated/60'
+                "
                 :aria-pressed="i === sel"
                 :aria-label="DAY_NAMES[i] + ' : ' + shortName(d)"
                 @click="sel = i"
             >
-                <span class="dname">{{ DAY_SHORT[i] }}</span
-                ><span class="day-ring"><Icon :name="ringIcon(d)" /></span
-                ><span class="dnum">{{ parseIso(d.date).getDate() }}</span
-                ><span class="dtype">{{ shortName(d) }}</span>
+                <span
+                    class="text-[11px] font-medium uppercase"
+                    :class="i === todayIdx ? 'text-primary' : 'text-muted'"
+                    >{{ DAY_SHORT[i] }}</span
+                ><span
+                    class="grid size-8 place-items-center rounded-full"
+                    :class="{
+                        'bg-primary text-inverted': d.status === 'done',
+                        'bg-error/10 text-error': d.status === 'missed',
+                        'bg-elevated text-muted':
+                            d.status !== 'done' && d.status !== 'missed',
+                    }"
+                    ><Icon :name="ringIcon(d)" :size="15" /></span
+                ><span class="text-sm font-semibold">{{
+                    parseIso(d.date).getDate()
+                }}</span
+                ><span
+                    class="hidden w-full truncate text-[11px] text-muted sm:block"
+                    >{{ shortName(d) }}</span
+                >
             </button>
         </div>
     </section>
 
-    <section class="section">
-        <div class="section-head"><h2>Statistiques rapides</h2></div>
-        <div class="stats">
-            <div class="card stat">
-                <span class="k"><Icon name="check" />Séances</span
-                ><span class="v num"
-                    >{{ stats.week.count }}<small>/ {{ planned }}</small></span
-                >
-                <div class="bar">
-                    <i
-                        :style="{
-                            width:
-                                Math.min(
-                                    100,
-                                    (stats.week.count / planned) * 100,
-                                ) + '%',
-                        }"
-                    ></i>
-                </div>
-                <span class="d"
-                    >Semaine dernière : {{ stats.prev.count }}/{{
-                        planned
-                    }}</span
-                >
-            </div>
-            <div class="card stat">
-                <span class="k">Kilomètres</span
-                ><span class="v num"
-                    >{{ fmt(stats.week.km) }}<small>km</small></span
-                >
-                <div class="bar">
-                    <i
-                        :style="{
-                            width:
-                                Math.min(
-                                    100,
-                                    (stats.week.km / profile.weekly_km_goal) *
-                                        100,
-                                ) + '%',
-                        }"
-                    ></i>
-                </div>
-                <span class="d"
-                    >Objectif {{ fmt(profile.weekly_km_goal, 0) }} km · sem.
-                    dernière {{ fmt(stats.prev.km) }} km</span
-                >
-            </div>
-            <div class="card stat">
-                <span class="k">Temps d’entraînement</span
-                ><span class="v num"
-                    >{{
+    <section class="space-y-3">
+        <h2 class="text-lg font-semibold">Statistiques rapides</h2>
+        <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <UCard :ui="{ body: 'space-y-2' }">
+                <p class="text-sm text-muted">Séances</p>
+                <p class="text-2xl font-semibold tabular-nums">
+                    {{ stats.week.count
+                    }}<span class="ml-1 text-sm font-normal text-muted"
+                        >/ {{ planned }}</span
+                    >
+                </p>
+                <UProgress
+                    :model-value="
+                        Math.min(100, (stats.week.count / planned) * 100)
+                    "
+                    size="sm"
+                />
+                <p class="text-xs text-muted">
+                    Semaine dernière : {{ stats.prev.count }}/{{ planned }}
+                </p>
+            </UCard>
+            <UCard :ui="{ body: 'space-y-2' }">
+                <p class="text-sm text-muted">Kilomètres</p>
+                <p class="text-2xl font-semibold tabular-nums">
+                    {{ fmt(stats.week.km)
+                    }}<span class="ml-1 text-sm font-normal text-muted"
+                        >km</span
+                    >
+                </p>
+                <UProgress
+                    :model-value="
+                        Math.min(
+                            100,
+                            (stats.week.km / profile.weekly_km_goal) * 100,
+                        )
+                    "
+                    size="sm"
+                    color="info"
+                />
+                <p class="text-xs text-muted">
+                    Objectif {{ fmt(profile.weekly_km_goal, 0) }} km · sem.
+                    dernière {{ fmt(stats.prev.km) }} km
+                </p>
+            </UCard>
+            <UCard :ui="{ body: 'space-y-2' }">
+                <p class="text-sm text-muted">Temps d’entraînement</p>
+                <p class="text-2xl font-semibold tabular-nums">
+                    {{
                         stats.week.seconds
                             ? fmtDur(stats.week.seconds).replace(' min', '')
                             : '0'
-                    }}<small>{{
+                    }}<span class="ml-1 text-sm font-normal text-muted">{{
                         stats.week.seconds >= 3600 ? '' : 'min'
-                    }}</small></span
-                ><span class="d"
-                    >Semaine dernière : {{ fmtDur(stats.prev.seconds) }}</span
-                >
-            </div>
-            <Link
+                    }}</span>
+                </p>
+                <p class="text-xs text-muted">
+                    Semaine dernière : {{ fmtDur(stats.prev.seconds) }}
+                </p>
+            </UCard>
+            <UCard
+                as="a"
                 href="/progression?onglet=poids"
-                class="card stat"
-                style="text-align: left"
+                class="transition hover:shadow-md hover:ring-primary/40"
+                :ui="{ body: 'space-y-2' }"
+                @click.prevent="router.visit('/progression?onglet=poids')"
             >
-                <span class="k">Poids</span
-                ><span class="v num">{{ fmt(lastKg) }}<small>kg</small></span>
+                <p class="text-sm text-muted">Poids</p>
+                <p class="text-2xl font-semibold tabular-nums">
+                    {{ fmt(lastKg)
+                    }}<span class="ml-1 text-sm font-normal text-muted"
+                        >kg</span
+                    >
+                </p>
                 <svg
                     v-if="spark"
                     viewBox="-2 -3 124 32"
-                    style="width: 100%; height: 26px"
+                    class="h-6 w-full"
                     aria-hidden="true"
                 >
                     <path
@@ -488,39 +565,46 @@ function openDone() {
                         fill="var(--accent)"
                     />
                 </svg>
-                <span class="d"
-                    ><template v-if="stats.delta30 != null"
+                <p class="text-xs text-muted">
+                    <template v-if="stats.delta30 != null"
                         ><span
-                            class="num"
+                            class="font-medium tabular-nums"
                             :class="
-                                stats.delta30 <= 0 ? 'delta-good' : 'delta-bad'
+                                stats.delta30 <= 0
+                                    ? 'text-success'
+                                    : 'text-warning'
                             "
                             >{{ stats.delta30 > 0 ? '+' : ''
                             }}{{ fmt(stats.delta30) }} kg</span
                         >
                         sur 30 jours · </template
-                    >cible {{ fmt(profile.target_weight_kg, 0) }} kg</span
-                >
-            </Link>
+                    >cible {{ fmt(profile.target_weight_kg, 0) }} kg
+                </p>
+            </UCard>
         </div>
     </section>
 
-    <section class="section">
-        <div class="section-head">
-            <h2>Dernières séances</h2>
-            <Link href="/entrainements" class="link">Tout voir</Link>
+    <section class="space-y-3">
+        <div class="flex items-baseline justify-between">
+            <h2 class="text-lg font-semibold">Dernières séances</h2>
+            <ULink to="/entrainements" class="text-sm text-primary"
+                >Tout voir</ULink
+            >
         </div>
-        <div class="card">
+        <UCard :ui="{ body: 'p-0 sm:p-0 divide-y divide-default' }">
             <HistoryRow
                 v-for="s in recent"
                 :key="s.id"
                 :s="s"
                 @open="openSession = s"
             />
-            <p v-if="!recent.length" class="empty">
-                Aucune séance enregistrée pour l’instant.
-            </p>
-        </div>
+            <UEmpty
+                v-if="!recent.length"
+                variant="naked"
+                icon="i-lucide-calendar"
+                title="Aucune séance enregistrée pour l’instant."
+            />
+        </UCard>
     </section>
 
     <ExerciseSheet v-if="shownEx" :exercise="shownEx" @close="shownEx = null" />

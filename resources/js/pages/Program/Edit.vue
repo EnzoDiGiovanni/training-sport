@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import { computed, reactive, ref } from 'vue';
 import ExerciseFormSheet from '@/components/ExerciseFormSheet.vue';
 import ExerciseImage from '@/components/ExerciseImage.vue';
 import ExercisePicker from '@/components/ExercisePicker.vue';
 import ExerciseSheet from '@/components/ExerciseSheet.vue';
-import Icon from '@/components/Icon.vue';
 import RunTimeline from '@/components/RunTimeline.vue';
+import { useUnsavedGuard } from '@/composables/useUnsavedGuard';
+import StepEditor from '@/components/StepEditor.vue';
 import { DAY_SHORT, fmt, fmtKg, num } from '@/composables/useFormat';
 import {
     estRunKm,
     exerciseById,
-    KIND_LABEL,
     maxLoadFor,
     runMinutes,
     TYPE_LABEL,
@@ -46,6 +46,9 @@ const props = defineProps<{
 const d = reactive<Draft>(JSON.parse(JSON.stringify(props.draft)));
 const errors = ref<Record<string, string>>({});
 const saving = ref(false);
+const saved = ref(JSON.stringify(d));
+const dirty = computed(() => JSON.stringify(d) !== saved.value);
+useUnsavedGuard(() => dirty.value && !saving.value);
 const p = props.profile;
 const ex = (id: number) => exerciseById(props.exercises, id);
 
@@ -132,9 +135,6 @@ function addGroup() {
         ],
     });
 }
-const tooFast = (s: Step) =>
-    s.speed_max_kmh > p.treadmill_max_kmh ||
-    s.speed_min_kmh > p.treadmill_max_kmh;
 function onTypeChange() {
     if (d.type === 'run' && !d.segments.length)
         d.segments = [
@@ -154,6 +154,7 @@ function save() {
     const payload = { ...d, days: d.days };
     const opts = {
         preserveScroll: true,
+        onSuccess: () => (saved.value = JSON.stringify(d)),
         onError: (e: Record<string, string>) => (errors.value = e),
         onFinish: () => (saving.value = false),
     };
@@ -161,179 +162,165 @@ function save() {
     else router.post('/programme/seances', payload, opts);
 }
 const runMin = computed(() => runMinutes(d.segments));
-const STEP_FIELDS: [keyof Step, string, string][] = [
-    ['duration_min', 'Durée', 'min'],
-    ['speed_min_kmh', 'Vitesse min', 'km/h'],
-    ['speed_max_kmh', 'Vitesse max', 'km/h'],
-    ['incline_pct', 'Incl.', '%'],
-];
+const TYPES = (['strength', 'run', 'recovery'] as WorkoutType[]).map(
+    (value) => ({
+        value,
+        label: TYPE_LABEL[value],
+    }),
+);
+const overMax = (we: WorkoutExercise) => {
+    const e = ex(we.exercise_id);
+    return (
+        !!e &&
+        e.load_type !== 'bodyweight' &&
+        (we.target_weight_kg ?? 0) > maxLoadFor(e.load_type, p)
+    );
+};
 </script>
 
 <template>
     <Head :title="d.name || 'Nouvelle séance'" />
-    <div class="stack gap-12">
-        <div>
-            <Link href="/programme" class="btn btn-ghost btn-sm"
-                ><Icon name="back" />Programme</Link
-            >
-        </div>
-        <div class="page-head">
-            <div class="stack gap-4">
-                <span class="eyebrow">{{
-                    d.id ? 'Modifier la séance' : 'Nouvelle séance'
-                }}</span>
-                <h1 class="title-xl">{{ d.name || 'Nouvelle séance' }}</h1>
-            </div>
-            <div class="row">
-                <Link href="/programme" class="btn">Annuler</Link
-                ><button
-                    class="btn btn-primary"
-                    :disabled="saving"
-                    @click="save"
+    <div class="space-y-3">
+        <UButton
+            to="/programme"
+            icon="i-lucide-chevron-left"
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            class="-ml-2"
+            >Programme</UButton
+        >
+        <UPageHeader
+            :headline="d.id ? 'Modifier la séance' : 'Nouvelle séance'"
+            :title="d.name || 'Nouvelle séance'"
+            :ui="{ root: 'pt-0' }"
+        >
+            <template #links>
+                <UButton to="/programme" color="neutral" variant="outline"
+                    >Annuler</UButton
                 >
-                    <Icon name="check" />Enregistrer
-                </button>
-            </div>
-        </div>
+                <UButton icon="i-lucide-check" :loading="saving" @click="save"
+                    >Enregistrer</UButton
+                >
+            </template>
+        </UPageHeader>
     </div>
-    <div class="notice">
-        <Icon name="info" /><span
+    <p class="-mt-4 flex items-start gap-1.5 text-sm text-muted">
+        <UIcon name="i-lucide-info" class="mt-0.5 size-4 flex-none" />
+        <span
             >Les séances déjà réalisées ne sont pas modifiées : elles gardent
             les valeurs du programme au moment où elles ont été faites.</span
         >
-    </div>
+    </p>
 
-    <div class="card card-pad stack gap-16">
-        <div class="grid-2">
-            <div class="field">
-                <label for="d-name">Nom de la séance</label
-                ><input
-                    id="d-name"
-                    v-model="d.name"
-                    class="input"
-                    :class="{ 'is-error': errors.name }"
-                /><span v-if="errors.name" class="err">{{ errors.name }}</span>
-            </div>
-            <div class="field">
-                <label for="d-type">Type</label>
-                <select
-                    id="d-type"
+    <UCard :ui="{ body: 'space-y-5' }">
+        <div class="grid gap-4 sm:grid-cols-2">
+            <UFormField label="Nom de la séance" :error="errors.name">
+                <UInput v-model="d.name" class="w-full" />
+            </UFormField>
+            <UFormField label="Type">
+                <USelect
                     v-model="d.type"
-                    class="input"
-                    @change="onTypeChange"
-                >
-                    <option
-                        v-for="t in ['strength', 'run', 'recovery'] as const"
-                        :key="t"
-                        :value="t"
-                    >
-                        {{ TYPE_LABEL[t] }}
-                    </option>
-                </select>
-            </div>
+                    :items="TYPES"
+                    class="w-full"
+                    @update:model-value="onTypeChange"
+                />
+            </UFormField>
         </div>
-        <div class="field">
-            <label for="d-obj">Objectif</label
-            ><textarea
-                id="d-obj"
-                v-model="d.objective"
-                class="input"
-                style="min-height: 60px"
-            ></textarea>
-        </div>
-        <div class="grid-2">
-            <div v-if="d.type !== 'run'" class="field">
-                <label for="d-dur">Durée estimée</label>
-                <div class="input-unit">
-                    <input
-                        id="d-dur"
-                        class="input num"
-                        inputmode="numeric"
-                        :value="d.estimated_duration_min ?? ''"
-                        @change="
-                            setNum(
-                                d,
-                                'estimated_duration_min',
-                                ($event.target as HTMLInputElement).value,
-                                true,
-                            )
-                        "
-                    /><span>min</span>
-                </div>
-            </div>
-            <div v-else class="field">
-                <span class="label">Durée</span>
-                <div
-                    class="input num"
-                    style="
-                        display: flex;
-                        align-items: center;
-                        background: var(--surface-2);
-                        border-color: var(--border);
+        <UFormField label="Objectif">
+            <UTextarea
+                :model-value="d.objective ?? ''"
+                :rows="2"
+                class="w-full"
+                @update:model-value="(v) => (d.objective = String(v))"
+            />
+        </UFormField>
+        <div class="grid gap-4 sm:grid-cols-2">
+            <UFormField v-if="d.type !== 'run'" label="Durée estimée">
+                <UInput
+                    inputmode="numeric"
+                    class="w-full"
+                    :model-value="String(d.estimated_duration_min ?? '')"
+                    @change="
+                        setNum(
+                            d,
+                            'estimated_duration_min',
+                            ($event.target as HTMLInputElement).value,
+                            true,
+                        )
                     "
                 >
-                    {{ runMin }} min (calculée)
-                </div>
-            </div>
-            <div class="field">
-                <span class="label">Jours planifiés</span>
-                <div class="filters">
-                    <button
+                    <template #trailing
+                        ><span class="text-xs text-muted">min</span></template
+                    >
+                </UInput>
+            </UFormField>
+            <UFormField v-else label="Durée">
+                <UInput
+                    :model-value="runMin + ' min (calculée)'"
+                    disabled
+                    class="w-full tabular-nums"
+                />
+            </UFormField>
+            <UFormField label="Jours planifiés">
+                <div class="flex flex-wrap gap-1.5">
+                    <UButton
                         v-for="(n, i) in DAY_SHORT"
                         :key="n"
-                        type="button"
-                        class="fchip"
+                        size="sm"
+                        :color="d.days.includes(i + 1) ? 'primary' : 'neutral'"
+                        :variant="d.days.includes(i + 1) ? 'soft' : 'outline'"
                         :aria-pressed="d.days.includes(i + 1)"
                         @click="toggleDay(i + 1)"
+                        >{{ n }}</UButton
                     >
-                        {{ n }}
-                    </button>
                 </div>
-            </div>
+            </UFormField>
         </div>
-    </div>
+    </UCard>
 
-    <section v-if="d.type === 'strength'" class="section">
-        <div class="section-head">
-            <h2>Exercices</h2>
-            <span class="faint num" style="font-size: 13px"
+    <section v-if="d.type === 'strength'" class="space-y-3">
+        <div class="flex items-baseline justify-between">
+            <h2 class="text-lg font-semibold">Exercices</h2>
+            <span class="text-sm text-muted tabular-nums"
                 >{{ d.exercises.length }} exercices ·
                 {{ totalSets(d.exercises) }} séries</span
             >
         </div>
-        <div class="card" style="padding: 4px 18px">
+        <UCard :ui="{ body: 'p-0 sm:p-0 divide-y divide-default' }">
             <div
                 v-for="(we, i) in d.exercises"
                 :key="i + '-' + we.exercise_id"
-                class="edit-ex"
+                class="flex items-start gap-3 p-4"
                 draggable="true"
-                :style="{ opacity: dragFrom === i ? 0.5 : 1 }"
+                :class="{ 'opacity-50': dragFrom === i }"
                 @dragstart="dragFrom = i"
                 @dragover.prevent
                 @drop="onDrop(i)"
                 @dragend="dragFrom = null"
             >
-                <div class="order-btns">
-                    <button
-                        type="button"
+                <div class="flex flex-col">
+                    <UButton
+                        icon="i-lucide-chevron-up"
+                        color="neutral"
+                        variant="ghost"
+                        size="xs"
                         :disabled="i === 0"
                         aria-label="Monter"
                         @click="move(d.exercises, i, i - 1)"
-                    >
-                        <Icon name="up" :size="15" />
-                    </button>
-                    <button
-                        type="button"
+                    />
+                    <UButton
+                        icon="i-lucide-chevron-down"
+                        color="neutral"
+                        variant="ghost"
+                        size="xs"
                         :disabled="i === d.exercises.length - 1"
                         aria-label="Descendre"
                         @click="move(d.exercises, i, i + 1)"
-                    >
-                        <Icon name="down" :size="15" />
-                    </button>
+                    />
                 </div>
                 <button
-                    class="thumb"
-                    style="width: 72px; height: 54px"
+                    class="thumb thumb-lg"
                     :aria-label="'Voir ' + ex(we.exercise_id)?.name"
                     @click="shown = ex(we.exercise_id) ?? null"
                 >
@@ -343,174 +330,135 @@ const STEP_FIELDS: [keyof Step, string, string][] = [
                         pose="end"
                     />
                 </button>
-                <div style="min-width: 0">
-                    <div style="font-weight: 500">
-                        {{ ex(we.exercise_id)?.name }}
+                <div class="min-w-0 flex-1 space-y-3">
+                    <div>
+                        <p class="font-medium">
+                            {{ ex(we.exercise_id)?.name }}
+                        </p>
+                        <p class="text-xs text-muted">
+                            {{ ex(we.exercise_id)?.primary_muscle }} ·
+                            {{ ex(we.exercise_id)?.equipment }}
+                        </p>
                     </div>
-                    <div class="faint" style="font-size: 12.5px">
-                        {{ ex(we.exercise_id)?.primary_muscle }} ·
-                        {{ ex(we.exercise_id)?.equipment }}
-                    </div>
-                    <div class="params">
-                        <div class="field">
-                            <label :for="`de-${i}-sets`">Séries</label>
-                            <div class="input-unit" style="width: 92px">
-                                <input
-                                    :id="`de-${i}-sets`"
-                                    class="input num"
-                                    style="height: 36px"
-                                    inputmode="numeric"
-                                    :value="we.sets"
-                                    @change="
-                                        setNum(
-                                            we,
-                                            'sets',
-                                            ($event.target as HTMLInputElement)
-                                                .value,
-                                            true,
-                                        )
+                    <div class="flex flex-wrap gap-3">
+                        <UFormField label="Séries" size="sm">
+                            <UInput
+                                inputmode="numeric"
+                                class="w-20"
+                                :model-value="we.sets"
+                                @change="
+                                    setNum(
+                                        we,
+                                        'sets',
+                                        ($event.target as HTMLInputElement)
+                                            .value,
+                                        true,
+                                    )
+                                "
+                            />
+                        </UFormField>
+                        <UFormField
+                            v-for="k in ['reps_min', 'reps_max'] as const"
+                            :key="k"
+                            size="sm"
+                            :label="
+                                (ex(we.exercise_id)?.measurement === 'time'
+                                    ? 'Durée '
+                                    : 'Reps ') +
+                                (k === 'reps_min' ? 'min' : 'max')
+                            "
+                        >
+                            <UInput
+                                inputmode="numeric"
+                                class="w-20"
+                                :model-value="we[k]"
+                                @change="
+                                    setNum(
+                                        we,
+                                        k,
+                                        ($event.target as HTMLInputElement)
+                                            .value,
+                                        true,
+                                    )
+                                "
+                            >
+                                <template
+                                    v-if="
+                                        ex(we.exercise_id)?.measurement ===
+                                        'time'
                                     "
-                                />
-                            </div>
-                        </div>
-                        <div class="field">
-                            <label :for="`de-${i}-min`">{{
-                                ex(we.exercise_id)?.measurement === 'time'
-                                    ? 'Durée min'
-                                    : 'Reps min'
-                            }}</label>
-                            <div class="input-unit" style="width: 92px">
-                                <input
-                                    :id="`de-${i}-min`"
-                                    class="input num"
-                                    style="height: 36px"
-                                    inputmode="numeric"
-                                    :value="we.reps_min"
-                                    @change="
-                                        setNum(
-                                            we,
-                                            'reps_min',
-                                            ($event.target as HTMLInputElement)
-                                                .value,
-                                            true,
-                                        )
-                                    "
-                                /><span>{{
-                                    ex(we.exercise_id)?.measurement === 'time'
-                                        ? 's'
-                                        : ''
-                                }}</span>
-                            </div>
-                        </div>
-                        <div class="field">
-                            <label :for="`de-${i}-max`">{{
-                                ex(we.exercise_id)?.measurement === 'time'
-                                    ? 'Durée max'
-                                    : 'Reps max'
-                            }}</label>
-                            <div class="input-unit" style="width: 92px">
-                                <input
-                                    :id="`de-${i}-max`"
-                                    class="input num"
-                                    style="height: 36px"
-                                    inputmode="numeric"
-                                    :value="we.reps_max"
-                                    @change="
-                                        setNum(
-                                            we,
-                                            'reps_max',
-                                            ($event.target as HTMLInputElement)
-                                                .value,
-                                            true,
-                                        )
-                                    "
-                                /><span>{{
-                                    ex(we.exercise_id)?.measurement === 'time'
-                                        ? 's'
-                                        : ''
-                                }}</span>
-                            </div>
-                        </div>
-                        <div
+                                    #trailing
+                                    ><span class="text-xs text-muted"
+                                        >s</span
+                                    ></template
+                                >
+                            </UInput>
+                        </UFormField>
+                        <UFormField
                             v-if="
                                 ex(we.exercise_id)?.load_type !== 'bodyweight'
                             "
-                            class="field"
-                        >
-                            <label :for="`de-${i}-kg`">{{
+                            size="sm"
+                            :label="
                                 ex(we.exercise_id)?.load_type ===
                                 'two_dumbbells'
                                     ? 'Charge / haltère'
                                     : 'Charge'
-                            }}</label>
-                            <div class="input-unit" style="width: 104px">
-                                <input
-                                    :id="`de-${i}-kg`"
-                                    class="input num"
-                                    style="height: 36px"
-                                    :style="
-                                        (we.target_weight_kg ?? 0) >
-                                        maxLoadFor(
-                                            ex(we.exercise_id)!.load_type,
-                                            p,
-                                        )
-                                            ? 'border-color:var(--danger)'
-                                            : ''
-                                    "
-                                    inputmode="decimal"
-                                    :value="
-                                        we.target_weight_kg != null
-                                            ? fmt(
-                                                  we.target_weight_kg,
-                                                  we.target_weight_kg % 1
-                                                      ? 1
-                                                      : 0,
-                                              )
-                                            : ''
-                                    "
-                                    @change="
-                                        setNum(
-                                            we,
-                                            'target_weight_kg',
-                                            ($event.target as HTMLInputElement)
-                                                .value,
-                                        )
-                                    "
-                                /><span>kg</span>
-                            </div>
-                        </div>
-                        <div class="field">
-                            <label :for="`de-${i}-rest`">Repos</label>
-                            <div class="input-unit" style="width: 92px">
-                                <input
-                                    :id="`de-${i}-rest`"
-                                    class="input num"
-                                    style="height: 36px"
-                                    inputmode="numeric"
-                                    :value="we.rest_seconds"
-                                    @change="
-                                        setNum(
-                                            we,
-                                            'rest_seconds',
-                                            ($event.target as HTMLInputElement)
-                                                .value,
-                                            true,
-                                        )
-                                    "
-                                /><span>s</span>
-                            </div>
-                        </div>
+                            "
+                        >
+                            <UInput
+                                inputmode="decimal"
+                                class="w-24"
+                                :color="overMax(we) ? 'error' : undefined"
+                                :highlight="overMax(we)"
+                                :model-value="
+                                    we.target_weight_kg != null
+                                        ? fmt(
+                                              we.target_weight_kg,
+                                              we.target_weight_kg % 1 ? 1 : 0,
+                                          )
+                                        : ''
+                                "
+                                @change="
+                                    setNum(
+                                        we,
+                                        'target_weight_kg',
+                                        ($event.target as HTMLInputElement)
+                                            .value,
+                                    )
+                                "
+                            >
+                                <template #trailing
+                                    ><span class="text-xs text-muted"
+                                        >kg</span
+                                    ></template
+                                >
+                            </UInput>
+                        </UFormField>
+                        <UFormField label="Repos" size="sm">
+                            <UInput
+                                inputmode="numeric"
+                                class="w-20"
+                                :model-value="we.rest_seconds"
+                                @change="
+                                    setNum(
+                                        we,
+                                        'rest_seconds',
+                                        ($event.target as HTMLInputElement)
+                                            .value,
+                                        true,
+                                    )
+                                "
+                            >
+                                <template #trailing
+                                    ><span class="text-xs text-muted"
+                                        >s</span
+                                    ></template
+                                >
+                            </UInput>
+                        </UFormField>
                     </div>
-                    <div
-                        v-if="
-                            ex(we.exercise_id) &&
-                            ex(we.exercise_id)!.load_type !== 'bodyweight' &&
-                            (we.target_weight_kg ?? 0) >
-                                maxLoadFor(ex(we.exercise_id)!.load_type, p)
-                        "
-                        class="err"
-                        style="margin-top: 6px"
-                    >
+                    <p v-if="overMax(we)" class="text-xs text-error">
                         Au-delà de ton matériel :
                         {{
                             fmtKg(maxLoadFor(ex(we.exercise_id)!.load_type, p))
@@ -520,402 +468,174 @@ const STEP_FIELDS: [keyof Step, string, string][] = [
                                 ? ' par haltère'
                                 : ''
                         }}.
-                    </div>
-                    <div
+                    </p>
+                    <p
                         v-if="we.reps_min > we.reps_max"
-                        class="err"
-                        style="margin-top: 6px"
+                        class="text-xs text-error"
                     >
                         Le minimum dépasse le maximum.
-                    </div>
+                    </p>
                 </div>
-                <button
-                    class="btn btn-ghost btn-icon rm"
+                <UButton
+                    icon="i-lucide-trash-2"
+                    color="neutral"
+                    variant="ghost"
                     :aria-label="'Retirer ' + ex(we.exercise_id)?.name"
                     @click="d.exercises.splice(i, 1)"
-                >
-                    <Icon name="trash" />
-                </button>
+                />
             </div>
-            <p v-if="!d.exercises.length" class="empty">
-                Aucun exercice. Ajoute-en un depuis la bibliothèque.
-            </p>
-        </div>
-        <span v-if="errors.exercises" class="err">{{ errors.exercises }}</span>
-        <div>
-            <button class="btn" @click="picking = true">
-                <Icon name="plus" />Ajouter un exercice
-            </button>
-        </div>
+            <UEmpty
+                v-if="!d.exercises.length"
+                variant="naked"
+                icon="i-lucide-dumbbell"
+                title="Aucun exercice. Ajoute-en un depuis la bibliothèque."
+            />
+        </UCard>
+        <p v-if="errors.exercises" class="text-sm text-error">
+            {{ errors.exercises }}
+        </p>
+        <UButton
+            icon="i-lucide-plus"
+            color="neutral"
+            variant="outline"
+            @click="picking = true"
+            >Ajouter un exercice</UButton
+        >
     </section>
 
-    <section v-if="d.type === 'run'" class="section">
-        <div class="section-head">
-            <h2>Déroulé</h2>
-            <span class="faint num" style="font-size: 13px"
+    <section v-if="d.type === 'run'" class="space-y-3">
+        <div class="flex items-baseline justify-between">
+            <h2 class="text-lg font-semibold">Déroulé</h2>
+            <span class="text-sm text-muted tabular-nums"
                 >{{ runMin }} min · ≈ {{ fmt(estRunKm(d.segments)) }} km</span
             >
         </div>
-        <div class="card card-pad stack gap-12">
-            <RunTimeline :segments="d.segments" />
-        </div>
-        <div class="card" style="padding: 4px 18px">
+        <UCard><RunTimeline :segments="d.segments" /></UCard>
+        <UCard :ui="{ body: 'py-1 sm:py-1 divide-y divide-default' }">
             <template v-for="(s, i) in d.segments" :key="i">
-                <div
-                    v-if="s.kind === 'repeat'"
-                    style="
-                        padding: 12px 0;
-                        border-bottom: 1px solid var(--border);
-                    "
-                >
+                <div v-if="s.kind === 'repeat'" class="py-3">
                     <div
-                        class="row wrapflex"
-                        style="justify-content: space-between"
+                        class="flex flex-wrap items-center justify-between gap-2"
                     >
-                        <div class="row gap-8">
-                            <span class="chip chip-strength"
-                                >Bloc fractionné</span
-                            ><span class="muted" style="font-size: 13px"
-                                >Répéter</span
-                            >
-                            <div class="stepper">
-                                <button
-                                    type="button"
-                                    aria-label="Moins de cycles"
-                                    @click="
-                                        (s as RepeatBlock).repeat_count =
-                                            Math.max(1, s.repeat_count - 1)
-                                    "
-                                >
-                                    <Icon name="minus" :size="14" />
-                                </button>
-                                <input
-                                    class="num"
-                                    aria-label="Nombre de cycles"
-                                    :value="s.repeat_count"
-                                    @change="
-                                        (s as RepeatBlock).repeat_count =
+                        <div class="flex items-center gap-2 text-sm">
+                            <UBadge variant="subtle">Bloc fractionné</UBadge>
+                            <span class="text-muted">Répéter</span>
+                            <UInputNumber
+                                :model-value="s.repeat_count"
+                                :min="1"
+                                :max="20"
+                                size="sm"
+                                class="w-28"
+                                aria-label="Nombre de cycles"
+                                @update:model-value="
+                                    (v) =>
+                                        ((s as RepeatBlock).repeat_count =
                                             Math.max(
                                                 1,
                                                 Math.min(
                                                     20,
-                                                    Math.round(
-                                                        num(
-                                                            (
-                                                                $event.target as HTMLInputElement
-                                                            ).value,
-                                                        ),
-                                                    ) || 1,
+                                                    Math.round(v ?? 1),
                                                 ),
-                                            )
-                                    "
-                                />
-                                <button
-                                    type="button"
-                                    aria-label="Plus de cycles"
-                                    @click="
-                                        (s as RepeatBlock).repeat_count =
-                                            Math.min(20, s.repeat_count + 1)
-                                    "
-                                >
-                                    <Icon name="plus" :size="14" />
-                                </button>
-                            </div>
-                            <span class="muted" style="font-size: 13px"
-                                >fois</span
-                            >
+                                            ))
+                                "
+                            />
+                            <span class="text-muted">fois</span>
                         </div>
-                        <div class="row gap-8">
-                            <div class="order-btns" style="flex-direction: row">
-                                <button
-                                    type="button"
-                                    :disabled="i === 0"
-                                    aria-label="Monter le bloc"
-                                    @click="move(d.segments, i, i - 1)"
-                                >
-                                    <Icon name="up" :size="15" /></button
-                                ><button
-                                    type="button"
-                                    :disabled="i === d.segments.length - 1"
-                                    aria-label="Descendre le bloc"
-                                    @click="move(d.segments, i, i + 1)"
-                                >
-                                    <Icon name="down" :size="15" />
-                                </button>
-                            </div>
-                            <button
-                                class="btn btn-sm btn-ghost"
+                        <div class="flex items-center gap-1">
+                            <UButton
+                                icon="i-lucide-chevron-up"
+                                color="neutral"
+                                variant="ghost"
+                                size="xs"
+                                :disabled="i === 0"
+                                aria-label="Monter le bloc"
+                                @click="move(d.segments, i, i - 1)"
+                            />
+                            <UButton
+                                icon="i-lucide-chevron-down"
+                                color="neutral"
+                                variant="ghost"
+                                size="xs"
+                                :disabled="i === d.segments.length - 1"
+                                aria-label="Descendre le bloc"
+                                @click="move(d.segments, i, i + 1)"
+                            />
+                            <UButton
+                                icon="i-lucide-plus"
+                                color="neutral"
+                                variant="ghost"
+                                size="sm"
                                 @click="s.children.push(newStep())"
+                                >Phase</UButton
                             >
-                                <Icon name="plus" />Phase
-                            </button>
-                            <button
-                                class="btn btn-ghost btn-icon"
+                            <UButton
+                                icon="i-lucide-trash-2"
+                                color="neutral"
+                                variant="ghost"
+                                size="sm"
                                 aria-label="Supprimer le bloc"
                                 @click="d.segments.splice(i, 1)"
-                            >
-                                <Icon name="trash" />
-                            </button>
-                        </div>
-                    </div>
-                    <div
-                        style="
-                            padding-left: 18px;
-                            border-left: 2px solid var(--accent-line);
-                            margin-top: 8px;
-                        "
-                    >
-                        <div
-                            v-for="(st, j) in s.children"
-                            :key="j"
-                            class="edit-ex"
-                            style="grid-template-columns: auto 1fr auto"
-                        >
-                            <div class="order-btns">
-                                <button
-                                    type="button"
-                                    :disabled="j === 0"
-                                    aria-label="Monter"
-                                    @click="move(s.children, j, j - 1)"
-                                >
-                                    <Icon name="up" :size="15" /></button
-                                ><button
-                                    type="button"
-                                    :disabled="j === s.children.length - 1"
-                                    aria-label="Descendre"
-                                    @click="move(s.children, j, j + 1)"
-                                >
-                                    <Icon name="down" :size="15" />
-                                </button>
-                            </div>
-                            <div
-                                class="params"
-                                style="margin: 0; align-items: flex-end"
-                            >
-                                <div
-                                    class="field"
-                                    style="flex: 1; min-width: 150px"
-                                >
-                                    <label :for="`sg-${i}-${j}-l`">Phase</label
-                                    ><input
-                                        :id="`sg-${i}-${j}-l`"
-                                        v-model="st.label"
-                                        class="input"
-                                        style="height: 36px"
-                                    />
-                                </div>
-                                <div class="field">
-                                    <label :for="`sg-${i}-${j}-k`">Type</label
-                                    ><select
-                                        :id="`sg-${i}-${j}-k`"
-                                        v-model="st.kind"
-                                        class="input"
-                                        style="height: 36px; width: 150px"
-                                    >
-                                        <option
-                                            v-for="(l, k) in KIND_LABEL"
-                                            :key="k"
-                                            :value="k"
-                                        >
-                                            {{ l }}
-                                        </option>
-                                    </select>
-                                </div>
-                                <div
-                                    v-for="[f, l, u] in STEP_FIELDS"
-                                    :key="f"
-                                    class="field"
-                                >
-                                    <label :for="`sg-${i}-${j}-${f}`">{{
-                                        l
-                                    }}</label>
-                                    <div
-                                        class="input-unit"
-                                        :style="{
-                                            width:
-                                                f === 'duration_min' ||
-                                                f === 'incline_pct'
-                                                    ? '84px'
-                                                    : '104px',
-                                        }"
-                                    >
-                                        <input
-                                            :id="`sg-${i}-${j}-${f}`"
-                                            class="input num"
-                                            style="height: 36px"
-                                            :style="
-                                                (f === 'speed_max_kmh' ||
-                                                    f === 'speed_min_kmh') &&
-                                                (st[f] as number) >
-                                                    p.treadmill_max_kmh
-                                                    ? 'border-color:var(--danger)'
-                                                    : ''
-                                            "
-                                            inputmode="decimal"
-                                            :value="
-                                                fmt(
-                                                    st[f] as number,
-                                                    (st[f] as number) % 1
-                                                        ? 1
-                                                        : 0,
-                                                )
-                                            "
-                                            @change="
-                                                setNum(
-                                                    st,
-                                                    f,
-                                                    (
-                                                        $event.target as HTMLInputElement
-                                                    ).value,
-                                                )
-                                            "
-                                        /><span>{{ u }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <button
-                                class="btn btn-ghost btn-icon"
-                                aria-label="Supprimer la phase"
-                                @click="s.children.splice(j, 1)"
-                            >
-                                <Icon name="trash" />
-                            </button>
-                            <div
-                                v-if="tooFast(st)"
-                                class="err"
-                                style="grid-column: 2"
-                            >
-                                Ton tapis est limité à
-                                {{ p.treadmill_max_kmh }} km/h.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div
-                    v-else
-                    class="edit-ex"
-                    style="grid-template-columns: auto 1fr auto"
-                >
-                    <div class="order-btns">
-                        <button
-                            type="button"
-                            :disabled="i === 0"
-                            aria-label="Monter"
-                            @click="move(d.segments, i, i - 1)"
-                        >
-                            <Icon name="up" :size="15" /></button
-                        ><button
-                            type="button"
-                            :disabled="i === d.segments.length - 1"
-                            aria-label="Descendre"
-                            @click="move(d.segments, i, i + 1)"
-                        >
-                            <Icon name="down" :size="15" />
-                        </button>
-                    </div>
-                    <div
-                        class="params"
-                        style="margin: 0; align-items: flex-end"
-                    >
-                        <div class="field" style="flex: 1; min-width: 150px">
-                            <label :for="`sg-${i}-l`">Phase</label
-                            ><input
-                                :id="`sg-${i}-l`"
-                                v-model="s.label"
-                                class="input"
-                                style="height: 36px"
                             />
                         </div>
-                        <div class="field">
-                            <label :for="`sg-${i}-k`">Type</label
-                            ><select
-                                :id="`sg-${i}-k`"
-                                v-model="s.kind"
-                                class="input"
-                                style="height: 36px; width: 150px"
-                            >
-                                <option
-                                    v-for="(l, k) in KIND_LABEL"
-                                    :key="k"
-                                    :value="k"
-                                >
-                                    {{ l }}
-                                </option>
-                            </select>
-                        </div>
-                        <div
-                            v-for="[f, l, u] in STEP_FIELDS"
-                            :key="f"
-                            class="field"
-                        >
-                            <label :for="`sg-${i}-${f}`">{{ l }}</label>
-                            <div
-                                class="input-unit"
-                                :style="{
-                                    width:
-                                        f === 'duration_min' ||
-                                        f === 'incline_pct'
-                                            ? '84px'
-                                            : '104px',
-                                }"
-                            >
-                                <input
-                                    :id="`sg-${i}-${f}`"
-                                    class="input num"
-                                    style="height: 36px"
-                                    :style="
-                                        (f === 'speed_max_kmh' ||
-                                            f === 'speed_min_kmh') &&
-                                        (s[f] as number) > p.treadmill_max_kmh
-                                            ? 'border-color:var(--danger)'
-                                            : ''
-                                    "
-                                    inputmode="decimal"
-                                    :value="
-                                        fmt(
-                                            s[f] as number,
-                                            (s[f] as number) % 1 ? 1 : 0,
-                                        )
-                                    "
-                                    @change="
-                                        setNum(
-                                            s,
-                                            f,
-                                            ($event.target as HTMLInputElement)
-                                                .value,
-                                        )
-                                    "
-                                /><span>{{ u }}</span>
-                            </div>
-                        </div>
                     </div>
-                    <button
-                        class="btn btn-ghost btn-icon"
-                        aria-label="Supprimer la phase"
-                        @click="d.segments.splice(i, 1)"
-                    >
-                        <Icon name="trash" />
-                    </button>
-                    <div v-if="tooFast(s)" class="err" style="grid-column: 2">
-                        Ton tapis est limité à {{ p.treadmill_max_kmh }} km/h.
+                    <div class="mt-2 border-l-2 border-primary/40 pl-4">
+                        <StepEditor
+                            v-for="(st, j) in s.children"
+                            :key="j"
+                            :step="st"
+                            :id="`sg-${i}-${j}`"
+                            :first="j === 0"
+                            :last="j === s.children.length - 1"
+                            :max-kmh="p.treadmill_max_kmh"
+                            @up="move(s.children, j, j - 1)"
+                            @down="move(s.children, j, j + 1)"
+                            @remove="s.children.splice(j, 1)"
+                        />
                     </div>
                 </div>
+                <StepEditor
+                    v-else
+                    :step="s"
+                    :id="`sg-${i}`"
+                    :first="i === 0"
+                    :last="i === d.segments.length - 1"
+                    :max-kmh="p.treadmill_max_kmh"
+                    @up="move(d.segments, i, i - 1)"
+                    @down="move(d.segments, i, i + 1)"
+                    @remove="d.segments.splice(i, 1)"
+                />
             </template>
-        </div>
-        <span v-if="errors.segments" class="err">{{ errors.segments }}</span>
-        <div class="row gap-8">
-            <button class="btn" @click="d.segments.push(newStep())">
-                <Icon name="plus" />Ajouter une phase</button
-            ><button class="btn btn-ghost" @click="addGroup">
-                <Icon name="plus" />Bloc fractionné
-            </button>
+        </UCard>
+        <p v-if="errors.segments" class="text-sm text-error">
+            {{ errors.segments }}
+        </p>
+        <div class="flex gap-2">
+            <UButton
+                icon="i-lucide-plus"
+                color="neutral"
+                variant="outline"
+                @click="d.segments.push(newStep())"
+                >Ajouter une phase</UButton
+            >
+            <UButton
+                icon="i-lucide-plus"
+                color="neutral"
+                variant="ghost"
+                @click="addGroup"
+                >Bloc fractionné</UButton
+            >
         </div>
     </section>
 
-    <div class="row" style="justify-content: flex-end">
-        <button class="btn btn-primary btn-lg" :disabled="saving" @click="save">
-            <Icon name="check" />Enregistrer
-        </button>
+    <div
+        class="sticky bottom-[calc(4.25rem+env(safe-area-inset-bottom))] z-30 -mx-4 flex items-center justify-end gap-3 border-t border-default bg-default/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none"
+    >
+        <span v-if="dirty" class="text-sm text-muted"
+            >Modifications non enregistrées</span
+        >
+        <UButton size="lg" icon="i-lucide-check" :loading="saving" @click="save"
+            >Enregistrer</UButton
+        >
     </div>
 
     <ExercisePicker

@@ -110,7 +110,7 @@ const svg = computed(() => {
     let s = `<svg width="${Wv}" height="${H}" viewBox="0 0 ${Wv} ${H}" role="img" aria-label="Graphique">`;
     ticks.forEach(
         (t) =>
-            (s += `<line x1="${pad.l}" x2="${Wv - pad.r}" y1="${y(t)}" y2="${y(t)}" stroke="#222227" stroke-width="1"/><text x="${pad.l - 8}" y="${y(t) + 3.5}" text-anchor="end">${tfmt(t)}</text>`),
+            (s += `<line x1="${pad.l}" x2="${Wv - pad.r}" y1="${y(t)}" y2="${y(t)}" stroke="var(--border)" stroke-width="1"/><text x="${pad.l - 8}" y="${y(t) + 3.5}" text-anchor="end">${tfmt(t)}</text>`),
     );
     const idxs =
         n <= 8 ? data.map((_, i) => i) : [0, Math.floor((n - 1) / 2), n - 1];

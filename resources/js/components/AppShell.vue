@@ -1,43 +1,46 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, watch } from 'vue';
-import Icon from '@/components/Icon.vue';
 import LiveSessionPill from '@/components/LiveSessionPill.vue';
-import { toast, toastMsg } from '@/lib/toast';
+import { toast } from '@/lib/toast';
 
 const page = usePage();
 const NAV = [
-    { href: '/', label: 'Accueil', icon: 'home', match: ['/', '/seance'] },
+    { to: '/', label: 'Accueil', icon: 'i-lucide-house', match: ['/seance'] },
     {
-        href: '/entrainements',
+        to: '/entrainements',
         label: 'Entraînements',
-        icon: 'list',
+        icon: 'i-lucide-list',
         match: ['/entrainements'],
     },
     {
-        href: '/programme',
+        to: '/programme',
         label: 'Programme',
-        icon: 'calendar',
+        icon: 'i-lucide-calendar',
         match: ['/programme', '/exercices'],
     },
     {
-        href: '/progression',
+        to: '/progression',
         label: 'Progression',
-        icon: 'chart',
+        icon: 'i-lucide-chart-line',
         match: ['/progression'],
     },
     {
-        href: '/parametres',
+        to: '/parametres',
         label: 'Paramètres',
-        icon: 'settings',
+        icon: 'i-lucide-settings',
         match: ['/parametres'],
     },
 ];
 const path = computed(() => page.url.split('?')[0]);
-const isCurrent = (n: (typeof NAV)[number]) =>
-    n.href === '/'
-        ? path.value === '/' || path.value.startsWith('/seance')
-        : n.match.some((m) => path.value.startsWith(m));
+const items = computed(() =>
+    NAV.map(({ match, ...n }) => ({
+        ...n,
+        active:
+            (n.to === '/' && path.value === '/') ||
+            match.some((m) => path.value.startsWith(m)),
+    })),
+);
 const onLive = computed(() => path.value.startsWith('/seance-en-cours'));
 
 // Toasts envoyés par le serveur (session flash).
@@ -49,61 +52,73 @@ watch(
 </script>
 
 <template>
-    <div class="app">
-        <aside class="side">
-            <div class="brand">
-                <span class="brand-mark"
-                    ><svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#0B0F00"
-                        stroke-width="2.6"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-                        <path d="M4 16l5-5 4 4 7-8" /></svg></span
-                >Recompo
-            </div>
-            <nav class="nav" aria-label="Navigation principale">
-                <Link
-                    v-for="n in NAV"
-                    :key="n.href"
-                    :href="n.href"
-                    :aria-current="isCurrent(n) ? 'page' : undefined"
-                    class="nav-link"
-                    ><Icon :name="n.icon" /><span>{{ n.label }}</span></Link
+    <div class="min-h-dvh bg-default lg:grid lg:grid-cols-[240px_1fr]">
+        <aside
+            class="sticky top-0 hidden h-dvh flex-col gap-6 border-r border-default bg-muted/40 px-3 py-5 lg:flex"
+        >
+            <Link
+                href="/"
+                class="flex items-center gap-2.5 px-2.5 font-semibold"
+            >
+                <span
+                    class="grid size-7 place-items-center rounded-md bg-primary text-inverted"
                 >
-            </nav>
+                    <UIcon name="i-lucide-activity" class="size-4" />
+                </span>
+                Recompo
+            </Link>
+            <UNavigationMenu
+                :items="items"
+                orientation="vertical"
+                aria-label="Navigation principale"
+            />
             <LiveSessionPill v-if="!onLive" />
-            <div class="side-foot">
-                {{ page.props.auth.user?.name
-                }}<template v-if="page.props.profile">
-                    · {{ page.props.profile.height_cm }} cm</template
-                ><br />
-                <button
-                    class="link"
-                    style="font-size: 12px"
-                    @click="router.post('/logout')"
-                >
-                    Se déconnecter
-                </button>
+            <div class="mt-auto flex items-center gap-2 px-2.5">
+                <div class="min-w-0 flex-1 text-sm">
+                    <p class="truncate font-medium">
+                        {{ page.props.auth.user?.name }}
+                    </p>
+                    <p v-if="page.props.profile" class="text-xs text-muted">
+                        {{ page.props.profile.height_cm }} cm
+                    </p>
+                </div>
+                <UTooltip text="Se déconnecter">
+                    <UButton
+                        icon="i-lucide-log-out"
+                        color="neutral"
+                        variant="ghost"
+                        size="sm"
+                        aria-label="Se déconnecter"
+                        @click="router.post('/logout')"
+                    />
+                </UTooltip>
             </div>
         </aside>
-        <main>
-            <div class="wrap view" :key="path"><slot /></div>
+        <main class="min-w-0 pb-24 lg:pb-0">
+            <div
+                :key="path"
+                class="mx-auto w-full max-w-5xl space-y-8 px-4 py-6 sm:px-6 lg:py-10"
+            >
+                <LiveSessionPill v-if="!onLive" class="lg:hidden" />
+                <slot />
+            </div>
         </main>
     </div>
-    <nav class="tabbar" aria-label="Navigation principale">
+
+    <nav
+        class="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-default bg-default/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+        aria-label="Navigation principale"
+    >
         <Link
-            v-for="n in NAV"
-            :key="n.href"
-            :href="n.href"
-            :aria-current="isCurrent(n) ? 'page' : undefined"
-            ><Icon :name="n.icon" /><span>{{ n.label }}</span></Link
+            v-for="n in items"
+            :key="n.to"
+            :href="n.to"
+            :aria-current="n.active ? 'page' : undefined"
+            class="flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium"
+            :class="n.active ? 'text-primary' : 'text-muted'"
         >
+            <UIcon :name="n.icon" class="size-5" />
+            <span class="max-w-full truncate px-1">{{ n.label }}</span>
+        </Link>
     </nav>
-    <div v-if="!onLive" class="mobile-live"><LiveSessionPill /></div>
-    <div v-if="toastMsg" class="toast" role="status">
-        <Icon name="check" />{{ toastMsg }}
-    </div>
 </template>

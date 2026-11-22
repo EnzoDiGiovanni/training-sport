@@ -25,12 +25,18 @@ export const TYPE_ICON: Record<WorkoutType, string> = {
     recovery: 'leaf',
     rest: 'moon',
 };
+export const TYPE_COLOR = {
+    run: 'info',
+    strength: 'primary',
+    recovery: 'secondary',
+    rest: 'neutral',
+} as const satisfies Record<WorkoutType, string>;
 export const KIND_COLOR: Record<string, string> = {
-    warmup: '#5B6B8C',
+    warmup: 'var(--color-slate-400)',
     run: 'var(--run)',
     fast: 'var(--accent)',
-    recovery: '#6E86B5',
-    cooldown: '#4A5468',
+    recovery: 'var(--color-blue-300)',
+    cooldown: 'var(--color-slate-500)',
 };
 export const KIND_LABEL: Record<string, string> = {
     warmup: 'Échauffement',

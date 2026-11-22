@@ -4,7 +4,6 @@ import { router } from '@inertiajs/vue3';
 import { computed, reactive, ref } from 'vue';
 import EffortRating from '@/components/EffortRating.vue';
 import ExerciseImage from '@/components/ExerciseImage.vue';
-import Icon from '@/components/Icon.vue';
 import Sheet from '@/components/Sheet.vue';
 import TypeChip from '@/components/TypeChip.vue';
 import {
@@ -92,266 +91,203 @@ const destroy = () =>
 </script>
 
 <template>
-    <Sheet :wide="s.type === 'strength'" :label="s.name" @close="emit('close')">
-        <div class="sheet-head">
-            <div class="stack grow">
-                <span class="faint" style="font-size: 12px">{{
-                    cap(dateLong(s.date))
-                }}</span>
-                <h3 class="title-m">{{ s.name }}</h3>
-            </div>
-            <TypeChip :type="s.type" />
-            <button
-                class="btn btn-ghost btn-icon"
-                aria-label="Fermer"
-                @click="emit('close')"
-            >
-                <Icon name="x" />
-            </button>
+    <Sheet
+        :wide="s.type === 'strength'"
+        :title="s.name"
+        :description="cap(dateLong(s.date))"
+        @close="emit('close')"
+    >
+        <template #actions><TypeChip :type="s.type" /></template>
+        <div class="grid grid-cols-2 gap-4">
+            <UFormField label="Date" :error="errors.date">
+                <UInput v-model="f.date" type="date" class="w-full" />
+            </UFormField>
+            <UFormField label="Durée" :error="errors.duration">
+                <UInput v-model="f.duration" class="w-full tabular-nums">
+                    <template #trailing
+                        ><span class="text-xs text-muted">mm:ss</span></template
+                    >
+                </UInput>
+            </UFormField>
         </div>
-        <div class="sheet-body">
-            <div class="grid-2">
-                <div class="field">
-                    <label for="ss-date">Date</label
-                    ><input
-                        id="ss-date"
-                        v-model="f.date"
-                        type="date"
-                        class="input"
-                        :class="{ 'is-error': errors.date }"
-                    /><span v-if="errors.date" class="err">{{
-                        errors.date
-                    }}</span>
-                </div>
-                <div class="field">
-                    <label for="ss-dur">Durée</label>
-                    <div class="input-unit">
-                        <input
-                            id="ss-dur"
-                            v-model="f.duration"
-                            class="input num"
-                            :class="{ 'is-error': errors.duration }"
-                        /><span>mm:ss</span>
-                    </div>
-                    <span v-if="errors.duration" class="err">{{
-                        errors.duration
-                    }}</span>
-                </div>
-            </div>
-            <template v-if="s.type === 'run' && s.run">
-                <div class="grid-3">
-                    <div class="field">
-                        <label for="ss-dist">Distance</label>
-                        <div class="input-unit">
-                            <input
-                                id="ss-dist"
-                                v-model="f.distance"
-                                class="input num"
-                                :class="{ 'is-error': errors.distance_km }"
-                                inputmode="decimal"
-                            /><span>km</span>
-                        </div>
-                        <span v-if="errors.distance_km" class="err">{{
-                            errors.distance_km
-                        }}</span>
-                    </div>
-                    <div class="field">
-                        <label for="ss-max">Vitesse max</label>
-                        <div class="input-unit">
-                            <input
-                                id="ss-max"
-                                v-model="f.max"
-                                class="input num"
-                                :class="{ 'is-error': errors.max_speed_kmh }"
-                                inputmode="decimal"
-                            /><span>km/h</span>
-                        </div>
-                        <span v-if="errors.max_speed_kmh" class="err">{{
-                            errors.max_speed_kmh
-                        }}</span>
-                    </div>
-                    <div class="field">
-                        <label for="ss-inc">Inclinaison</label>
-                        <div class="input-unit">
-                            <input
-                                id="ss-inc"
-                                v-model="f.incline"
-                                class="input num"
-                                :class="{ 'is-error': errors.incline_pct }"
-                                inputmode="decimal"
-                            /><span>%</span>
-                        </div>
-                        <span v-if="errors.incline_pct" class="err">{{
-                            errors.incline_pct
-                        }}</span>
-                    </div>
-                </div>
-                <div class="row wrapflex gap-16">
-                    <span class="muted"
-                        >Vitesse moyenne calculée :
-                        <b class="num" style="color: var(--text)"
-                            >{{ fmt(avg, 2) }} km/h</b
-                        ></span
+        <template v-if="s.type === 'run' && s.run">
+            <div class="grid grid-cols-3 gap-4">
+                <UFormField label="Distance" :error="errors.distance_km">
+                    <UInput
+                        v-model="f.distance"
+                        inputmode="decimal"
+                        class="w-full"
                     >
-                    <span v-if="s.run.cycles_completed != null" class="muted"
-                        >Cycles :
-                        <b class="num" style="color: var(--text)"
-                            >{{ s.run.cycles_completed
-                            }}{{
-                                s.run.cycles_planned
-                                    ? ' / ' + s.run.cycles_planned
-                                    : ''
-                            }}</b
-                        ></span
+                        <template #trailing
+                            ><span class="text-xs text-muted"
+                                >km</span
+                            ></template
+                        >
+                    </UInput>
+                </UFormField>
+                <UFormField label="Vitesse max" :error="errors.max_speed_kmh">
+                    <UInput v-model="f.max" inputmode="decimal" class="w-full">
+                        <template #trailing
+                            ><span class="text-xs text-muted"
+                                >km/h</span
+                            ></template
+                        >
+                    </UInput>
+                </UFormField>
+                <UFormField label="Inclinaison" :error="errors.incline_pct">
+                    <UInput
+                        v-model="f.incline"
+                        inputmode="decimal"
+                        class="w-full"
                     >
-                </div>
-            </template>
-            <template v-if="s.type === 'strength'">
-                <div v-for="it in s.exercises" :key="it.id" class="stack gap-8">
-                    <div class="row">
-                        <span class="thumb" style="width: 52px; height: 40px"
-                            ><ExerciseImage
-                                :exercise="
-                                    exImg(it.exercise_id) ?? {
-                                        name: it.name,
-                                        illustration_key: it.illustration_key,
-                                        image_url: it.image_url,
-                                    }
-                                "
-                                :animated="false"
-                                pose="end" /></span
-                        ><span class="grow" style="font-weight: 500">{{
-                            it.name
-                        }}</span>
-                    </div>
-                    <table
-                        class="sets"
-                        style="
-                            background: var(--bg);
-                            border-radius: 10px;
-                            overflow: hidden;
-                        "
-                    >
-                        <thead>
-                            <tr>
-                                <th>Série</th>
-                                <th>
-                                    {{
-                                        it.load_type === 'bodyweight'
-                                            ? ''
-                                            : 'kg'
-                                    }}
-                                </th>
-                                <th>
-                                    {{
-                                        it.measurement === 'time'
-                                            ? 'Secondes'
-                                            : 'Reps'
-                                    }}
-                                </th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr
-                                v-for="(x, j) in f.sets.filter(
-                                    (y) => y.item === it.id,
-                                )"
-                                :key="x.id"
-                            >
-                                <td>
-                                    <span class="set-num">{{ j + 1 }}</span>
-                                </td>
-                                <td>
-                                    <span
-                                        v-if="it.load_type === 'bodyweight'"
-                                        class="faint"
-                                        >PDC</span
-                                    ><input
-                                        v-else
-                                        v-model="x.kg"
-                                        class="cell-in"
-                                        inputmode="decimal"
-                                        :aria-label="'Charge série ' + (j + 1)"
-                                    />
-                                </td>
-                                <td>
-                                    <input
-                                        v-model="x.reps"
-                                        class="cell-in"
-                                        inputmode="numeric"
-                                        :aria-label="
-                                            'Répétitions série ' + (j + 1)
-                                        "
-                                    />
-                                </td>
-                                <td></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <span v-if="it.note" class="faint" style="font-size: 12.5px"
-                        >Note : {{ it.note }}</span
-                    >
-                </div>
-                <span class="faint num" style="font-size: 12.5px"
-                    >Volume enregistré : {{ fmtInt(s.volume) }} kg</span
-                >
-            </template>
-            <div v-if="s.type === 'recovery'" class="field">
-                <label for="ss-act">Activité</label
-                ><input id="ss-act" v-model="f.activity" class="input" />
+                        <template #trailing
+                            ><span class="text-xs text-muted">%</span></template
+                        >
+                    </UInput>
+                </UFormField>
             </div>
-            <div class="field">
-                <span class="label">Ressenti</span
-                ><EffortRating v-model="f.rpe" />
-            </div>
-            <div class="field">
-                <label for="ss-com">Commentaire</label
-                ><textarea
-                    id="ss-com"
-                    v-model="f.comment"
-                    class="input"
-                ></textarea>
-            </div>
-            <p
-                v-if="s.type === 'run' && s.run"
-                class="faint"
-                style="font-size: 12.5px"
-            >
-                Dépense estimée : ≈
-                {{ fmtInt((profile.weight ?? 0) * (num(f.distance) || 0)) }}
-                kcal (estimation indicative).
-            </p>
-            <p class="faint" style="font-size: 12px">
-                Cette séance conserve les valeurs du programme au moment où elle
-                a été réalisée. Modifier le programme ne la change pas.
-            </p>
-        </div>
-        <div class="sheet-foot">
-            <template v-if="confirmDel">
+            <div class="flex flex-wrap gap-4 text-sm text-muted">
                 <span
-                    class="muted grow"
-                    style="font-size: 13px; align-self: center"
+                    >Vitesse moyenne calculée :
+                    <b class="text-highlighted tabular-nums"
+                        >{{ fmt(avg, 2) }} km/h</b
+                    ></span
+                >
+                <span v-if="s.run.cycles_completed != null"
+                    >Cycles :
+                    <b class="text-highlighted tabular-nums"
+                        >{{ s.run.cycles_completed
+                        }}{{
+                            s.run.cycles_planned
+                                ? ' / ' + s.run.cycles_planned
+                                : ''
+                        }}</b
+                    ></span
+                >
+            </div>
+        </template>
+        <template v-if="s.type === 'strength'">
+            <div v-for="it in s.exercises" :key="it.id" class="space-y-2">
+                <div class="flex items-center gap-3">
+                    <span class="thumb"
+                        ><ExerciseImage
+                            :exercise="
+                                exImg(it.exercise_id) ?? {
+                                    name: it.name,
+                                    illustration_key: it.illustration_key,
+                                    image_url: it.image_url,
+                                }
+                            "
+                            :animated="false"
+                            pose="end" /></span
+                    ><span class="flex-1 font-medium">{{ it.name }}</span>
+                </div>
+                <table class="sets">
+                    <thead>
+                        <tr>
+                            <th>Série</th>
+                            <th>
+                                {{ it.load_type === 'bodyweight' ? '' : 'kg' }}
+                            </th>
+                            <th>
+                                {{
+                                    it.measurement === 'time'
+                                        ? 'Secondes'
+                                        : 'Reps'
+                                }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            v-for="(x, j) in f.sets.filter(
+                                (y) => y.item === it.id,
+                            )"
+                            :key="x.id"
+                        >
+                            <td>{{ j + 1 }}</td>
+                            <td>
+                                <span
+                                    v-if="it.load_type === 'bodyweight'"
+                                    class="text-muted"
+                                    >PDC</span
+                                ><UInput
+                                    v-else
+                                    v-model="x.kg"
+                                    size="sm"
+                                    inputmode="decimal"
+                                    class="w-24"
+                                    :aria-label="'Charge série ' + (j + 1)"
+                                />
+                            </td>
+                            <td>
+                                <UInput
+                                    v-model="x.reps"
+                                    size="sm"
+                                    inputmode="numeric"
+                                    class="w-24"
+                                    :aria-label="'Répétitions série ' + (j + 1)"
+                                />
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p v-if="it.note" class="text-xs text-muted">
+                    Note : {{ it.note }}
+                </p>
+            </div>
+            <p class="text-xs text-muted tabular-nums">
+                Volume enregistré : {{ fmtInt(s.volume) }} kg
+            </p>
+        </template>
+        <UFormField v-if="s.type === 'recovery'" label="Activité">
+            <UInput v-model="f.activity" class="w-full" />
+        </UFormField>
+        <UFormField label="Ressenti"
+            ><EffortRating v-model="f.rpe"
+        /></UFormField>
+        <UFormField label="Commentaire">
+            <UTextarea v-model="f.comment" class="w-full" />
+        </UFormField>
+        <p v-if="s.type === 'run' && s.run" class="text-xs text-muted">
+            Dépense estimée : ≈
+            {{ fmtInt((profile.weight ?? 0) * (num(f.distance) || 0)) }}
+            kcal (estimation indicative).
+        </p>
+        <p class="text-xs text-dimmed">
+            Cette séance conserve les valeurs du programme au moment où elle a
+            été réalisée. Modifier le programme ne la change pas.
+        </p>
+        <template #footer>
+            <template v-if="confirmDel">
+                <span class="mr-auto self-center text-sm text-muted"
                     >Supprimer définitivement ?</span
                 >
-                <button class="btn" @click="confirmDel = false">Non</button
-                ><button class="btn btn-danger" @click="destroy">
-                    Supprimer
-                </button>
+                <UButton
+                    color="neutral"
+                    variant="outline"
+                    @click="confirmDel = false"
+                    >Non</UButton
+                >
+                <UButton color="error" @click="destroy">Supprimer</UButton>
             </template>
             <template v-else>
-                <button
-                    class="btn btn-danger"
-                    style="margin-right: auto"
+                <UButton
+                    icon="i-lucide-trash-2"
+                    color="error"
+                    variant="ghost"
+                    class="mr-auto"
                     @click="confirmDel = true"
+                    >Supprimer</UButton
                 >
-                    <Icon name="trash" />Supprimer
-                </button>
-                <button class="btn" @click="emit('close')">Annuler</button
-                ><button class="btn btn-primary" @click="save">
-                    Enregistrer
-                </button>
+                <UButton
+                    color="neutral"
+                    variant="outline"
+                    @click="emit('close')"
+                    >Annuler</UButton
+                >
+                <UButton @click="save">Enregistrer</UButton>
             </template>
-        </div>
+        </template>
     </Sheet>
 </template>

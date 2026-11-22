@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
 import { computed, nextTick, ref } from 'vue';
-import Icon from '@/components/Icon.vue';
 import { fmt, num } from '@/composables/useFormat';
+import { useUnsavedGuard } from '@/composables/useUnsavedGuard';
 import type { Profile } from '@/types';
 
 const props = defineProps<{ profile: Profile }>();
@@ -42,6 +42,7 @@ const bmi = computed(
     () => num(form.weight) / Math.pow(num(form.height_cm) / 100, 2),
 );
 const formEl = ref<HTMLElement>();
+useUnsavedGuard(() => form.isDirty && !form.processing);
 function save() {
     form.transform((d) => ({
         ...d,
@@ -52,11 +53,12 @@ function save() {
             .filter(Boolean),
     })).put('/parametres', {
         preserveScroll: true,
+        onSuccess: () => form.defaults(),
         onError: () =>
             nextTick(() =>
                 (
                     formEl.value?.querySelector(
-                        '.is-error',
+                        '[aria-invalid="true"]',
                     ) as HTMLElement | null
                 )?.focus(),
             ),
@@ -144,110 +146,105 @@ const TOGGLES: [
 
 <template>
     <Head title="Paramètres" />
-    <div class="page-head">
-        <div class="stack gap-4">
-            <span class="eyebrow">Profil</span>
-            <h1 class="title-xl">Paramètres</h1>
-        </div>
-        <button
-            class="btn btn-primary"
-            :disabled="form.processing"
-            @click="save"
-        >
-            <Icon name="check" />Enregistrer
-        </button>
-    </div>
-    <form ref="formEl" class="stack gap-20" @submit.prevent="save">
-        <section
-            v-for="s in SECTIONS"
-            :key="s.title"
-            class="card card-pad stack gap-16"
-        >
-            <div class="stack gap-4">
-                <h2 class="title-m">{{ s.title }}</h2>
-                <p v-if="s.sub" class="faint" style="font-size: 13px">
-                    {{ s.sub }}
-                </p>
-            </div>
-            <div :class="'grid-' + s.cols">
-                <div v-for="[k, l, u, hint] in s.fields" :key="k" class="field">
-                    <label :for="'p-' + k">{{ l }}</label>
-                    <div :class="{ 'input-unit': u }">
-                        <input
-                            :id="'p-' + k"
-                            v-model="form[k]"
-                            class="input"
-                            :class="{
-                                num: k !== 'name',
-                                'is-error': form.errors[k],
-                            }"
-                            :inputmode="k === 'name' ? undefined : 'decimal'"
-                            :aria-invalid="!!form.errors[k]"
-                        /><span v-if="u">{{ u }}</span>
-                    </div>
-                    <span v-if="form.errors[k]" class="err">{{
-                        form.errors[k]
-                    }}</span
-                    ><span v-else-if="hint" class="hint">{{ hint }}</span>
-                </div>
-            </div>
-            <p
-                v-if="s.title === 'Profil' && !isNaN(bmi)"
-                class="faint"
-                style="font-size: 12.5px"
+    <UPageHeader headline="Profil" title="Paramètres">
+        <template #links>
+            <UColorModeButton color="neutral" variant="outline" />
+            <UButton
+                icon="i-lucide-check"
+                :loading="form.processing"
+                @click="save"
+                >Enregistrer</UButton
             >
-                IMC indicatif : {{ fmt(bmi) }}. Peu pertinent en recomposition :
-                il ne distingue pas masse grasse et masse musculaire.
-            </p>
-            <div v-if="s.title === 'Objectifs'" class="field">
-                <label for="p-goals">Objectifs personnels (un par ligne)</label
-                ><textarea
-                    id="p-goals"
-                    v-model="form.goals"
-                    class="input"
-                ></textarea>
-            </div>
-            <template v-if="s.title === 'Matériel de musculation'">
-                <div class="stack">
-                    <label
-                        v-for="[k, l] in TOGGLES"
+        </template>
+    </UPageHeader>
+    <form ref="formEl" class="space-y-6" @submit.prevent="save">
+        <UCard v-for="s in SECTIONS" :key="s.title">
+            <template #header>
+                <h2 class="font-semibold">{{ s.title }}</h2>
+                <p v-if="s.sub" class="mt-1 text-sm text-muted">{{ s.sub }}</p>
+            </template>
+            <div class="space-y-5">
+                <div
+                    class="grid gap-4"
+                    :class="s.cols === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'"
+                >
+                    <UFormField
+                        v-for="[k, l, u, hint] in s.fields"
                         :key="k"
-                        class="row"
-                        style="
-                            justify-content: space-between;
-                            padding: 6px 0;
-                            cursor: pointer;
-                            min-height: 44px;
-                        "
-                        ><span>{{ l }}</span
-                        ><input
+                        :label="l"
+                        :error="form.errors[k]"
+                        :help="hint"
+                    >
+                        <UInput
                             v-model="form[k]"
-                            type="checkbox"
-                            style="
-                                width: 20px;
-                                height: 20px;
-                                accent-color: var(--accent);
-                            "
-                    /></label>
+                            :inputmode="k === 'name' ? undefined : 'decimal'"
+                            :class="[
+                                'w-full',
+                                { 'tabular-nums': k !== 'name' },
+                            ]"
+                        >
+                            <template v-if="u" #trailing
+                                ><span class="text-xs text-muted">{{
+                                    u
+                                }}</span></template
+                            >
+                        </UInput>
+                    </UFormField>
                 </div>
-                <div class="notice">
-                    <Icon name="info" /><span
-                        >Charge max utilisable : {{ form.dumbbell_max_kg }} kg
-                        par haltère,
-                        {{
+                <p
+                    v-if="s.title === 'Profil' && !isNaN(bmi)"
+                    class="text-xs text-muted"
+                >
+                    IMC indicatif : {{ fmt(bmi) }}. Peu pertinent en
+                    recomposition : il ne distingue pas masse grasse et masse
+                    musculaire.
+                </p>
+                <UFormField
+                    v-if="s.title === 'Objectifs'"
+                    label="Objectifs personnels"
+                    hint="un par ligne"
+                >
+                    <UTextarea v-model="form.goals" class="w-full" />
+                </UFormField>
+                <template v-if="s.title === 'Matériel de musculation'">
+                    <div class="divide-y divide-default">
+                        <USwitch
+                            v-for="[k, l] in TOGGLES"
+                            :key="k"
+                            v-model="form[k]"
+                            :label="l"
+                            class="flex-row-reverse justify-between py-3"
+                        />
+                    </div>
+                    <UAlert
+                        variant="subtle"
+                        color="neutral"
+                        icon="i-lucide-info"
+                        :title="`Charge max utilisable : ${form.dumbbell_max_kg} kg par haltère, ${
                             form.dumbbells_combinable
                                 ? fmt(num(form.dumbbell_max_kg) * 2, 0) +
                                   ' kg sur un seul haltère combiné'
                                 : 'pas de combinaison'
-                        }}.</span
-                    >
-                </div>
-            </template>
-        </section>
-        <div class="row" style="justify-content: flex-end">
-            <button class="btn btn-primary btn-lg" :disabled="form.processing">
-                <Icon name="check" />Enregistrer les paramètres
-            </button>
+                        }.`"
+                    />
+                </template>
+            </div>
+        </UCard>
+        <div
+            class="sticky bottom-[calc(4.25rem+env(safe-area-inset-bottom))] z-30 -mx-4 flex items-center justify-end gap-3 border-t border-default bg-default/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none"
+        >
+            <span v-if="form.isDirty" class="text-sm text-muted"
+                >Modifications non enregistrées</span
+            >
+            <UButton
+                type="submit"
+                size="lg"
+                icon="i-lucide-check"
+                :loading="form.processing"
+                >Enregistrer<span class="hidden sm:inline"
+                    >&nbsp;les paramètres</span
+                ></UButton
+            >
         </div>
     </form>
 </template>

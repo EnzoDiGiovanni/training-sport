@@ -1,40 +1,42 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { useMediaQuery } from '@vueuse/core';
+import { computed } from 'vue';
+import UDrawer from '@nuxt/ui/components/Drawer.vue';
+import UModal from '@nuxt/ui/components/Modal.vue';
 
-// Panneau modal (bottom sheet sur mobile), fermable avec Échap ou clic sur le fond.
-defineProps<{ wide?: boolean; label?: string }>();
+// Panneau modal : tiroir du bas sur mobile, fenêtre centrée sur desktop. Échap / clic dehors ferment.
+const props = defineProps<{
+    wide?: boolean;
+    title: string;
+    description?: string;
+}>();
 const emit = defineEmits<{ close: [] }>();
-const el = ref<HTMLElement>();
-let prevFocus: Element | null = null;
-const onKey = (e: KeyboardEvent) => e.key === 'Escape' && emit('close');
-
-onMounted(() => {
-    prevFocus = document.activeElement;
-    document.body.style.overflow = 'hidden';
-    document.addEventListener('keydown', onKey);
-    el.value?.focus();
-});
-onBeforeUnmount(() => {
-    document.body.style.overflow = '';
-    document.removeEventListener('keydown', onKey);
-    (prevFocus as HTMLElement | null)?.focus?.();
-});
+const mobile = useMediaQuery('(max-width: 640px)');
+const cmp = computed(() => (mobile.value ? UDrawer : UModal));
+const ui = computed(() =>
+    mobile.value
+        ? { content: 'max-h-[92dvh]', body: 'space-y-5' }
+        : {
+              content: props.wide ? 'sm:max-w-3xl' : 'sm:max-w-lg',
+              body: 'space-y-5',
+              footer: 'justify-end',
+          },
+);
 </script>
 
 <template>
-    <Teleport to="body">
-        <div class="scrim" @click.self="emit('close')">
-            <div
-                ref="el"
-                class="sheet"
-                :class="{ wide }"
-                role="dialog"
-                aria-modal="true"
-                :aria-label="label"
-                tabindex="-1"
-            >
-                <slot />
-            </div>
-        </div>
-    </Teleport>
+    <component
+        :is="cmp"
+        :open="true"
+        :title="title"
+        :description="description"
+        :ui="ui"
+        @update:open="!$event && emit('close')"
+    >
+        <template v-if="$slots.actions" #actions
+            ><slot name="actions"
+        /></template>
+        <template #body><slot /></template>
+        <template v-if="$slots.footer" #footer><slot name="footer" /></template>
+    </component>
 </template>
