@@ -27,8 +27,9 @@ class LiveSessionController extends Controller
     {
         $this->own($workout->program->user_id);
         abort_unless(in_array($workout->type, [WorkoutType::Run, WorkoutType::Strength], true) && ! $workout->archived_at, 404);
+        $request->validate(['date' => ['nullable', 'date', 'before_or_equal:today']]);
         try {
-            $starter->start($this->user(), $workout, $request->boolean('abandon_current'));
+            $starter->start($this->user(), $workout, $request->boolean('abandon_current'), $request->date('date'));
         } catch (SessionInProgressException) {
             return redirect()->route('live.show')->with('toast', 'Une séance est déjà en cours');
         }

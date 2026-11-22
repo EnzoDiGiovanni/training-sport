@@ -10,14 +10,16 @@ use App\Models\User;
 use App\Models\Workout;
 use App\Models\WorkoutExercise;
 use App\Models\WorkoutSession;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 
 /** Démarre une séance : snapshot des cibles du programme (règle 1) et pré-remplissage (règle 3). */
 class SessionStarter
 {
-    public function start(User $user, Workout $workout, bool $abandonCurrent = false): WorkoutSession
+    /** $date : jour de la séance (rattrapage d'une séance passée), aujourd'hui par défaut. */
+    public function start(User $user, Workout $workout, bool $abandonCurrent = false, ?CarbonInterface $date = null): WorkoutSession
     {
-        return DB::transaction(function () use ($user, $workout, $abandonCurrent) {
+        return DB::transaction(function () use ($user, $workout, $abandonCurrent, $date) {
             $current = self::current($user);
             if ($current && ! $abandonCurrent) {
                 throw new SessionInProgressException($current);
@@ -35,7 +37,7 @@ class SessionStarter
 
             $session = $user->sessions()->create([
                 'workout_id' => $workout->id, 'workout_name' => $workout->name, 'type' => $workout->type,
-                'performed_on' => today(), 'started_at' => now(), 'status' => SessionStatus::InProgress,
+                'performed_on' => $date ?? today(), 'started_at' => now(), 'status' => SessionStatus::InProgress,
                 'planned_snapshot' => $snapshot + ['objective' => $workout->objective],
             ]);
 

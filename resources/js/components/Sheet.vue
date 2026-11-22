@@ -15,7 +15,14 @@ const mobile = useMediaQuery('(max-width: 640px)');
 const cmp = computed(() => (mobile.value ? UDrawer : UModal));
 const ui = computed(() =>
     mobile.value
-        ? { content: 'max-h-[92dvh]', body: 'space-y-5' }
+        ? {
+              content: 'max-h-[92dvh]',
+              // Seul le corps défile : les boutons du pied restent visibles.
+              container:
+                  'min-h-0 overflow-hidden pb-[calc(1rem+env(safe-area-inset-bottom))]',
+              body: 'min-h-0 space-y-5 overflow-y-auto',
+              footer: 'flex-row flex-wrap justify-end border-t border-default pt-3',
+          }
         : {
               content: props.wide ? 'sm:max-w-3xl' : 'sm:max-w-lg',
               body: 'space-y-5',

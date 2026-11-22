@@ -6,10 +6,12 @@ import ExerciseIllustration from '@/components/ExerciseIllustration.vue';
 import RunTimeline from '@/components/RunTimeline.vue';
 import { useChronometer } from '@/composables/useChronometer';
 import {
+    dateLong,
     fmt,
     fmtClock,
     fmtInt,
     num,
+    iso,
     parseClock,
 } from '@/composables/useFormat';
 import { flatSteps, KIND_COLOR, runMinutes, speedLabel } from '@/lib/domain';
@@ -21,6 +23,12 @@ const props = defineProps<{
     profile: Profile;
 }>();
 const chrono = useChronometer(props.session.id);
+// Séance rattrapée (date passée) : on affiche le jour concerné.
+const lateDay =
+    props.session.date !== iso(new Date())
+        ? dateLong(props.session.date)
+        : null;
+
 const steps = flatSteps(props.segments);
 const block = props.segments.find((s) => s.kind === 'repeat') as
     | RepeatBlock
@@ -135,7 +143,8 @@ function abandon() {
         <div class="min-w-0 flex-1">
             <p class="truncate font-semibold">{{ session.name }}</p>
             <p class="text-xs text-muted">
-                Course sur tapis · {{ runMinutes(segments) }} min prévues
+                <template v-if="lateDay">Séance du {{ lateDay }} · </template
+                >Course sur tapis · {{ runMinutes(segments) }} min prévues
             </p>
         </div>
         <UButton color="error" variant="ghost" @click="abandon"

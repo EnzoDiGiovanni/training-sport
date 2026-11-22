@@ -69,6 +69,8 @@ const w = computed(
     () => props.workouts.find((x) => x.id === day.value.workout_id) ?? null,
 );
 const isToday = computed(() => sel.value === todayIdx);
+// Jour passé : la séance est enregistrée à sa date (rattrapage), sinon aujourd'hui.
+const isPast = computed(() => parseIso(day.value.date) < todayDate);
 const dayLabel = computed(() => {
     if (isToday.value) return 'Aujourd’hui';
     const d = parseIso(day.value.date);
@@ -273,11 +275,13 @@ function openDone() {
                     v-else
                     size="lg"
                     icon="i-lucide-play"
-                    @click="start(w)"
+                    @click="start(w, isPast ? day.date : undefined)"
                     >{{
                         isToday
                             ? 'Commencer ma séance'
-                            : 'Commencer cette séance'
+                            : isPast
+                              ? `Saisir la séance de ${DAY_NAMES[sel].toLowerCase()}`
+                              : 'Commencer cette séance'
                     }}</UButton
                 >
                 <UButton

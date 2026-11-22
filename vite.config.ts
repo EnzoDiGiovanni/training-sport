@@ -31,6 +31,14 @@ export default defineConfig({
                     info: 'blue',
                     neutral: 'zinc',
                 },
+                // Fenêtres, tiroirs et menus au-dessus de la barre d'onglets mobile (z-40).
+                drawer: { slots: { overlay: 'z-50', content: 'z-50' } },
+                modal: { slots: { overlay: 'z-50', content: 'z-50' } },
+                select: { slots: { content: 'z-50' } },
+                selectMenu: { slots: { content: 'z-50' } },
+                tooltip: { slots: { content: 'z-50' } },
+                popover: { slots: { content: 'z-50' } },
+                dropdownMenu: { slots: { content: 'z-50' } },
                 pageHeader: {
                     slots: {
                         root: 'border-b-0 py-0 sm:py-2',

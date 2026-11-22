@@ -14,6 +14,7 @@ import {
     fmtClock,
     fmtInt,
     fmtKg,
+    iso,
 } from '@/composables/useFormat';
 import { useLiveSession } from '@/composables/useLiveSession';
 import { useNow } from '@/composables/useNow';
@@ -48,6 +49,12 @@ const items = reactive<SessionItem[]>(
 );
 const { save, flush, status } = useLiveSession(items);
 const timer = useRestTimer(props.session.id);
+// Séance rattrapée (date passée) : on affiche le jour concerné.
+const lateDay =
+    props.session.date !== iso(new Date())
+        ? dateLong(props.session.date)
+        : null;
+
 const now = useNow();
 // Sur mobile, un exercice à la fois (la barre du haut sert à naviguer).
 const compact = useMediaQuery('(max-width: 1023px)');
@@ -194,7 +201,8 @@ const prevTxt = (it: SessionItem, j: number) => {
             <div class="min-w-0 flex-1">
                 <p class="truncate font-semibold">{{ session.name }}</p>
                 <p class="text-xs text-muted">
-                    Séance en cours<template v-if="status === 'saving'">
+                    {{ lateDay ? 'Séance du ' + lateDay : 'Séance en cours'
+                    }}<template v-if="status === 'saving'">
                         · enregistrement…</template
                     ><template v-else-if="status === 'error'">
                         ·

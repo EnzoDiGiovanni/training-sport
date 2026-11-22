@@ -134,3 +134,15 @@ it('logs a recovery activity', function () {
         ->assertSessionHasNoErrors();
     expect($user->sessions()->first())->type->value->toBe('recovery')->duration_seconds->toBe(1800);
 });
+
+it('starts a late session on the planned past day, never in the future', function () {
+    $user = owner();
+    $past = today()->subDays(2)->toDateString();
+    $this->actingAs($user)->post('/seances/'.workout('Musculation A')->id.'/demarrer', ['date' => $past])
+        ->assertRedirect('/seance-en-cours');
+    expect(SessionStarter::current($user)->performed_on->toDateString())->toBe($past);
+
+    $this->post('/seances/'.workout('Fractionné')->id.'/demarrer', ['date' => today()->addDay()->toDateString(), 'abandon_current' => true])
+        ->assertSessionHasErrors('date');
+    expect(SessionStarter::current($user)->workout_name)->toBe('Musculation A');
+});
